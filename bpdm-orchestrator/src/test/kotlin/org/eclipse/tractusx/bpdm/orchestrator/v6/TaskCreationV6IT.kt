@@ -20,10 +20,10 @@
 package org.eclipse.tractusx.bpdm.orchestrator.v6
 
 import org.assertj.core.api.Assertions
+import org.eclipse.tractusx.bpdm.orchestrator.v6.util.toV6
 import org.eclipse.tractusx.orchestrator.api.model.TaskMode
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskCreateRequestV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskCreateResponseV6
-import org.eclipse.tractusx.orchestrator.api.v6.model.TaskModeV6
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -89,9 +89,3 @@ class TaskCreationV6IT: UnscheduledOrchestratorTestBaseV6() {
         Assertions.assertThatThrownBy(createRequest).isInstanceOf(WebClientResponseException.BadRequest::class.java)
     }
 }
-
-private fun TaskMode.toV6() =
-    when (this) {
-        TaskMode.UpdateFromSharingMember -> TaskModeV6.UpdateFromSharingMember
-        TaskMode.UpdateFromPool -> TaskModeV6.UpdateFromPool
-    }

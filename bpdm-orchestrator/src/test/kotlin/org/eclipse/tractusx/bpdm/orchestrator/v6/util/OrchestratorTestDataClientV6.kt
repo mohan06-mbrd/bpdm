@@ -27,7 +27,6 @@ import org.eclipse.tractusx.orchestrator.api.v6.model.TaskClientStateDtoV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskCreateRequestV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorDtoV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6
-import org.eclipse.tractusx.orchestrator.api.v6.model.TaskModeV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationRequestV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationResponseV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepResultEntryDtoV6
@@ -76,9 +75,4 @@ class OrchestratorTestDataClientV6(
         return resultEntry
     }
 
-    private fun TaskMode.toV6() =
-        when (this) {
-            TaskMode.UpdateFromSharingMember -> TaskModeV6.UpdateFromSharingMember
-            TaskMode.UpdateFromPool -> TaskModeV6.UpdateFromPool
-        }
 }
