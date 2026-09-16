@@ -29,14 +29,36 @@ import org.eclipse.tractusx.bpdm.orchestrator.exception.BpdmTaskNotFoundExceptio
 import org.eclipse.tractusx.bpdm.orchestrator.repository.GoldenRecordTaskRepository
 import org.eclipse.tractusx.bpdm.orchestrator.repository.fetchBusinessPartnerData
 import org.eclipse.tractusx.bpdm.orchestrator.service.GoldenRecordTaskStateMachine
-import org.eclipse.tractusx.orchestrator.api.model.*
-import org.eclipse.tractusx.orchestrator.api.v6.model.BusinessPartner
-import org.eclipse.tractusx.orchestrator.api.v6.model.LegalEntity
-import org.eclipse.tractusx.orchestrator.api.v6.model.TaskClientStateDto
-import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStateResponse
-import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationEntryDto
-import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationResponse
-import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepResultRequest
+import org.eclipse.tractusx.orchestrator.api.model.TaskMode
+import org.eclipse.tractusx.orchestrator.api.model.TaskStep
+import org.eclipse.tractusx.orchestrator.api.v6.model.AlternativeAddressV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.BpnReferenceV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.BusinessPartnerV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.BusinessStateV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.ConfidenceCriteriaV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.GeoCoordinateV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.IdentifierV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.LegalEntityV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.NamePartV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.PhysicalAddressV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.PostalAddressV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.ResultStateV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.SiteV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.StepStateV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.StreetV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskClientStateDtoV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorDtoV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskProcessingStateDtoV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskResultStateSearchRequestV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskResultStateSearchResponseV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStateRequestV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStateResponseV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationEntryDtoV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationRequestV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationResponseV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepResultRequestV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepV6
+import org.eclipse.tractusx.orchestrator.api.v6.model.UncategorizedPropertiesV6
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -60,7 +82,7 @@ class GoldenRecordTaskLegacyServiceMapper(
             throw BpdmTaskNotFoundException(uuidString)
         }
 
-    fun requestedToBusinessPartner(businessPartner: BusinessPartner) =
+    fun requestedToBusinessPartner(businessPartner: BusinessPartnerV6) =
         with(businessPartner){
             GoldenRecordTaskDb.BusinessPartner(
                 nameParts = toNameParts(businessPartner),
@@ -88,13 +110,13 @@ class GoldenRecordTaskLegacyServiceMapper(
             )
         }
 
-    fun toNameParts(businessPartner: BusinessPartner) =
+    fun toNameParts(businessPartner: BusinessPartnerV6) =
         mutableListOf(
             businessPartner.uncategorized.nameParts.map { NamePartDb(it, null) },
-            businessPartner.nameParts.map { NamePartDb(it.name, it.type) }
+            businessPartner.nameParts.map { NamePartDb(it.name, it.type.toNamePartType()) }
         ).flatten().toMutableList()
 
-    fun toIdentifiers(businessPartner: BusinessPartner) =
+    fun toIdentifiers(businessPartner: BusinessPartnerV6) =
         IdentifierDb.Scope.entries.mapNotNull { scope ->
             when (scope) {
                 IdentifierDb.Scope.LegalEntity -> businessPartner.legalEntity.identifiers
@@ -106,12 +128,12 @@ class GoldenRecordTaskLegacyServiceMapper(
             }?.map { toIdentifier(it, scope) }
         }.flatten().toMutableList()
 
-    fun toIdentifier(identifier: Identifier, scope: IdentifierDb.Scope) =
+    fun toIdentifier(identifier: IdentifierV6, scope: IdentifierDb.Scope) =
         with(identifier) {
             IdentifierDb(value, type, issuingBody, scope)
         }
 
-    fun toStates(businessPartner: BusinessPartner) =
+    fun toStates(businessPartner: BusinessPartnerV6) =
         BusinessStateDb.Scope.entries.mapNotNull { scope ->
             when (scope) {
                 BusinessStateDb.Scope.LegalEntity -> businessPartner.legalEntity.states
@@ -124,12 +146,12 @@ class GoldenRecordTaskLegacyServiceMapper(
             }?.map { toState(it, scope) }
         }.flatten().toMutableList()
 
-    fun toState(state: BusinessState, scope: BusinessStateDb.Scope) =
+    fun toState(state: BusinessStateV6, scope: BusinessStateDb.Scope) =
         with(state) {
             BusinessStateDb(validFrom?.toTimestamp(), validTo?.toTimestamp(), type, scope)
         }
 
-    fun toConfidences(businessPartner: BusinessPartner) =
+    fun toConfidences(businessPartner: BusinessPartnerV6) =
         ConfidenceCriteriaDb.Scope.entries.mapNotNull { scope ->
             when (scope) {
                 ConfidenceCriteriaDb.Scope.LegalEntity -> businessPartner.legalEntity.confidenceCriteria
@@ -141,7 +163,7 @@ class GoldenRecordTaskLegacyServiceMapper(
             }?.let { scope to toConfidence(it) }
         }.toMap().toMutableMap()
 
-    fun toConfidence(confidenceCriteria: ConfidenceCriteria) =
+    fun toConfidence(confidenceCriteria: ConfidenceCriteriaV6) =
         with(confidenceCriteria) {
             ConfidenceCriteriaDb(
                 sharedByOwner,
@@ -153,17 +175,17 @@ class GoldenRecordTaskLegacyServiceMapper(
             )
         }
 
-    fun toPostalAddresses(businessPartner: BusinessPartner) =
+    fun toPostalAddresses(businessPartner: BusinessPartnerV6) =
         PostalAddressDb.Scope.entries.mapNotNull { scope ->
             when (scope) {
                 PostalAddressDb.Scope.LegalAddress -> businessPartner.legalEntity.legalAddress
                 PostalAddressDb.Scope.SiteMainAddress -> businessPartner.site?.siteMainAddress
                 PostalAddressDb.Scope.AdditionalAddress -> businessPartner.additionalAddress
-                PostalAddressDb.Scope.UncategorizedAddress -> businessPartner.uncategorized.address?.postalProperties
+                PostalAddressDb.Scope.UncategorizedAddress -> businessPartner.uncategorized.address
             }?.let { scope to toPostalAddress(it, scope) }
         }.toMap().toMutableMap()
 
-    fun toPostalAddress(postalAddress: PostalAddress, scope: PostalAddressDb.Scope) =
+    fun toPostalAddress(postalAddress: PostalAddressV6, scope: PostalAddressDb.Scope) =
         with(postalAddress) {
             PostalAddressDb(
                 addressName = addressName,
@@ -173,7 +195,7 @@ class GoldenRecordTaskLegacyServiceMapper(
             )
         }
 
-    fun toPhysicalAddress(physicalAddress: PhysicalAddress) =
+    fun toPhysicalAddress(physicalAddress: PhysicalAddressV6) =
         with(physicalAddress) {
             PostalAddressDb.PhysicalAddressDb(
                 geographicCoordinates = toGeoCoordinate(geographicCoordinates),
@@ -194,7 +216,7 @@ class GoldenRecordTaskLegacyServiceMapper(
             )
         }
 
-    fun toStreet(street: Street) =
+    fun toStreet(street: StreetV6) =
         with(street) {
             PostalAddressDb.Street(
                 name,
@@ -209,12 +231,12 @@ class GoldenRecordTaskLegacyServiceMapper(
             )
         }
 
-    fun toGeoCoordinate(geoCoordinate: GeoCoordinate) =
+    fun toGeoCoordinate(geoCoordinate: GeoCoordinateV6) =
         with(geoCoordinate) {
             PostalAddressDb.GeoCoordinate(longitude, latitude, altitude)
         }
 
-    fun toAlternativeAddress(alternativeAddress: AlternativeAddress?) =
+    fun toAlternativeAddress(alternativeAddress: AlternativeAddressV6?) =
         alternativeAddress?.let {
             with(alternativeAddress) {
                 PostalAddressDb.AlternativeAddress(
@@ -245,7 +267,7 @@ class GoldenRecordTaskLegacyServiceMapper(
             deliveryServiceNumber = null
         )
 
-    fun toBpnReferences(businessPartner: BusinessPartner) =
+    fun toBpnReferences(businessPartner: BusinessPartnerV6) =
         BpnReferenceDb.Scope.entries.mapNotNull { scope ->
             when (scope) {
                 BpnReferenceDb.Scope.LegalEntity -> businessPartner.legalEntity.bpnReference
@@ -257,12 +279,12 @@ class GoldenRecordTaskLegacyServiceMapper(
             }?.let { scope to toBpnReference(it) }
         }.toMap().toMutableMap()
 
-    fun toBpnReference(bpnReference: BpnReference) =
+    fun toBpnReference(bpnReference: BpnReferenceV6) =
         with(bpnReference) {
             BpnReferenceDb(
                 referenceValue = referenceValue,
                 desiredBpn = desiredBpn,
-                referenceType = referenceType
+                referenceType = referenceType?.toBpnReferenceType()
             )
         }
 
@@ -271,7 +293,7 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     fun responseToClientState(task: GoldenRecordTaskDb, timeout: Instant) =
         with(task) {
-            TaskClientStateDto(
+            TaskClientStateDtoV6(
                 taskId = task.uuid.toString(),
                 recordId = task.gateRecord.privateId.toString(),
                 businessPartnerResult = toBusinessPartnerResult(businessPartner),
@@ -281,7 +303,7 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     fun toBusinessPartnerResult(businessPartner: GoldenRecordTaskDb.BusinessPartner) =
         with(businessPartner) {
-            BusinessPartner(
+            BusinessPartnerV6(
                 nameParts = toResponseCategorizedNameParts(nameParts),
                 owningCompany = owningCompany,
                 uncategorized = toResponseUncategorizedProperties(businessPartner),
@@ -292,29 +314,29 @@ class GoldenRecordTaskLegacyServiceMapper(
         }
 
     fun toResponseCategorizedNameParts(nameParts: List<NamePartDb>) =
-        nameParts.filter { it.type != null }.map { NamePart(it.name, it.type!!) }
+        nameParts.filter { it.type != null }.map { NamePartV6(it.name, it.type!!.toResponseNamePartType()) }
 
     fun toResponseUncategorizedProperties(businessPartner: GoldenRecordTaskDb.BusinessPartner) =
-        UncategorizedProperties(
+        UncategorizedPropertiesV6(
             nameParts = toResponseUncategorizedNameParts(businessPartner.nameParts),
             identifiers = toResponseIdentifiers(businessPartner, IdentifierDb.Scope.Uncategorized),
             states = toResponseStates(businessPartner, BusinessStateDb.Scope.Uncategorized),
-            address = toResponsePostalAddress(businessPartner, PostalAddressDb.Scope.UncategorizedAddress)?.let { PostalAddressWithScriptVariants(it, emptyList()) }
+            address = toResponsePostalAddress(businessPartner, PostalAddressDb.Scope.UncategorizedAddress)
         )
 
     fun toResponseUncategorizedNameParts(nameParts: List<NamePartDb>) =
         nameParts.filter { it.type == null }.map { it.name }
 
     fun toResponseIdentifiers(businessPartner: GoldenRecordTaskDb.BusinessPartner, scope: IdentifierDb.Scope) =
-        businessPartner.identifiers.filter { it.scope == scope }.map { Identifier(it.value, it.type, it.issuingBody) }
+        businessPartner.identifiers.filter { it.scope == scope }.map { IdentifierV6(it.value, it.type, it.issuingBody) }
 
     fun toResponseStates(businessPartner: GoldenRecordTaskDb.BusinessPartner, scope: BusinessStateDb.Scope) =
-        businessPartner.businessStates.filter { it.scope == scope }.map { BusinessState(it.validFrom?.instant, it.validTo?.instant, it.type) }
+        businessPartner.businessStates.filter { it.scope == scope }.map { BusinessStateV6(it.validFrom?.instant, it.validTo?.instant, it.type) }
 
     fun toResponsePostalAddress(businessPartner: GoldenRecordTaskDb.BusinessPartner, scope: PostalAddressDb.Scope) =
         businessPartner.addresses[scope]?.let { postalAddress ->
             with(postalAddress) {
-                PostalAddress(
+                PostalAddressV6(
                     bpnReference = toResponseBpnReference(businessPartner, scope.bpnReference),
                     addressName = addressName,
                     identifiers = toResponseIdentifiers(businessPartner, scope.identifier),
@@ -328,19 +350,23 @@ class GoldenRecordTaskLegacyServiceMapper(
         }
 
     fun toResponseBpnReference(businessPartner: GoldenRecordTaskDb.BusinessPartner, scope: BpnReferenceDb.Scope) =
-        businessPartner.bpnReferences[scope]?.let { toResponseBpnReferences(it) } ?: BpnReference.empty
+        businessPartner.bpnReferences[scope]?.let { toResponseBpnReferences(it) } ?: BpnReferenceV6.empty
 
     fun toResponseBpnReferences(bpnReference: BpnReferenceDb) =
         with(bpnReference) {
-            BpnReference(referenceValue = referenceValue, desiredBpn = desiredBpn, referenceType = referenceType)
+            BpnReferenceV6(
+                referenceValue = referenceValue,
+                desiredBpn = desiredBpn,
+                referenceType = referenceType?.toResponseBpnReferenceType()
+            )
         }
 
     fun toResponseConfidence(businessPartner: GoldenRecordTaskDb.BusinessPartner, scope: ConfidenceCriteriaDb.Scope) =
-        businessPartner.confidences[scope]?.let { toResponseConfidences(it) } ?: ConfidenceCriteria.empty
+        businessPartner.confidences[scope]?.let { toResponseConfidences(it) } ?: ConfidenceCriteriaV6.empty
 
     fun toResponseConfidences(confidenceCriteria: ConfidenceCriteriaDb) =
         with(confidenceCriteria) {
-            ConfidenceCriteria(
+            ConfidenceCriteriaV6(
                 sharedByOwner = sharedByOwner,
                 checkedByExternalDataSource = checkedByExternalDataSource,
                 numberOfSharingMembers = numberOfSharingMembers,
@@ -352,7 +378,7 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     fun toResponsePhysicalAddress(physicalAddress: PostalAddressDb.PhysicalAddressDb) =
         with(physicalAddress) {
-            PhysicalAddress(
+            PhysicalAddressV6(
                 geographicCoordinates = toResponseGeoCoordinate(geographicCoordinates),
                 country = country,
                 administrativeAreaLevel1 = administrativeAreaLevel1,
@@ -373,12 +399,12 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     fun toResponseGeoCoordinate(geoCoordinate: PostalAddressDb.GeoCoordinate) =
         with(geoCoordinate) {
-            GeoCoordinate(longitude = longitude, latitude = latitude, altitude = altitude)
+            GeoCoordinateV6(longitude = longitude, latitude = latitude, altitude = altitude)
         }
 
     fun toResponseStreet(street: PostalAddressDb.Street) =
         with(street) {
-            Street(
+            StreetV6(
                 name, houseNumber,
                 houseNumberSupplement = houseNumberSupplement,
                 milestone = milestone,
@@ -393,7 +419,7 @@ class GoldenRecordTaskLegacyServiceMapper(
     fun toResponseAlternativeAddress(alternativeAddress: PostalAddressDb.AlternativeAddress) =
         alternativeAddress.takeIf { it.exists }?.let {
             with(alternativeAddress) {
-                AlternativeAddress(
+                AlternativeAddressV6(
                     geographicCoordinates = toResponseGeoCoordinate(geographicCoordinates),
                     country = country,
                     administrativeAreaLevel1 = administrativeAreaLevel1,
@@ -408,7 +434,7 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     fun toResponseLegalEntity(businessPartner: GoldenRecordTaskDb.BusinessPartner) =
         with(businessPartner) {
-            LegalEntity(
+            LegalEntityV6(
                 bpnReference = toResponseBpnReference(businessPartner, BpnReferenceDb.Scope.LegalEntity),
                 legalName = legalName,
                 legalShortName = legalShortName,
@@ -426,9 +452,9 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     fun toResponseProcessingState(task: GoldenRecordTaskDb, timeout: Instant) =
         with(task.processingState) {
-            TaskProcessingStateDto(
+            TaskProcessingStateDtoV6(
                 resultState = toResponseResultState(resultState),
-                step = step,
+                step = step.toResponseTaskStep(),
                 stepState = toResponseStepState(stepState),
                 errors = errors.map { toResponseTaskError(it) },
                 createdAt = task.createdAt.instant,
@@ -439,47 +465,46 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     fun toResponseResultState(resultState: GoldenRecordTaskDb.ResultState) =
         when(resultState){
-            GoldenRecordTaskDb.ResultState.Pending -> ResultState.Pending
-            GoldenRecordTaskDb.ResultState.Success ->  ResultState.Success
-            GoldenRecordTaskDb.ResultState.Error ->  ResultState.Error
-            GoldenRecordTaskDb.ResultState.Aborted ->  ResultState.Error
+            GoldenRecordTaskDb.ResultState.Pending -> ResultStateV6.Pending
+            GoldenRecordTaskDb.ResultState.Success ->  ResultStateV6.Success
+            GoldenRecordTaskDb.ResultState.Error ->  ResultStateV6.Error
+            GoldenRecordTaskDb.ResultState.Aborted ->  ResultStateV6.Error
         }
 
     fun toResponseStepState(stepState: GoldenRecordTaskDb.StepState) =
         when(stepState){
-            GoldenRecordTaskDb.StepState.Queued -> StepState.Queued
-            GoldenRecordTaskDb.StepState.Reserved -> StepState.Reserved
-            GoldenRecordTaskDb.StepState.Success -> StepState.Success
-            GoldenRecordTaskDb.StepState.Error -> StepState.Error
-            GoldenRecordTaskDb.StepState.Aborted -> StepState.Error
+            GoldenRecordTaskDb.StepState.Queued -> StepStateV6.Queued
+            GoldenRecordTaskDb.StepState.Reserved -> StepStateV6.Reserved
+            GoldenRecordTaskDb.StepState.Success -> StepStateV6.Success
+            GoldenRecordTaskDb.StepState.Error -> StepStateV6.Error
+            GoldenRecordTaskDb.StepState.Aborted -> StepStateV6.Error
         }
 
     fun toResponseTaskError(taskError: TaskErrorDb) =
         with(taskError) {
-            TaskErrorDto(type = type, description = description)
+            TaskErrorDtoV6(type = type.toResponseTaskErrorType(), description = description)
         }
 
     fun toResponseSite(businessPartner: GoldenRecordTaskDb.BusinessPartner) =
         businessPartner.takeIf { it.siteExists }?.let {
             with(businessPartner) {
-                Site(
+                SiteV6(
                     bpnReference = toResponseBpnReference(businessPartner, BpnReferenceDb.Scope.Site),
                     siteName = siteName,
                     states = toResponseStates(businessPartner, BusinessStateDb.Scope.Site),
                     confidenceCriteria = toResponseConfidence(businessPartner, ConfidenceCriteriaDb.Scope.Site),
                     hasChanged = siteHasChanged,
-                    siteMainAddress = toResponsePostalAddress(businessPartner, PostalAddressDb.Scope.SiteMainAddress),
-                    scriptVariants = emptyList()
+                    siteMainAddress = toResponsePostalAddress(businessPartner, PostalAddressDb.Scope.SiteMainAddress)
                 )
             }
         }
 
     @Transactional
-    fun reserveTasksForStep(reservationRequest: TaskStepReservationRequest): TaskStepReservationResponse {
+    fun reserveTasksForStep(reservationRequest: TaskStepReservationRequestV6): TaskStepReservationResponseV6 {
         logger.debug { "Reservation of next golden record tasks: executing reserveTasksForStep() with parameters $reservationRequest" }
         val now = Instant.now()
 
-        val foundTasks = taskRepository.findByStepAndStepState(reservationRequest.step, GoldenRecordTaskDb.StepState.Queued, Pageable.ofSize(reservationRequest.amount))
+        val foundTasks = taskRepository.findByStepAndStepState(reservationRequest.step.toTaskStep(), GoldenRecordTaskDb.StepState.Queued, Pageable.ofSize(reservationRequest.amount))
             .content.toSet()
             .also { taskRepository.fetchBusinessPartnerData(it) }
         val reservedTasks = foundTasks.map { goldenRecordTaskStateMachine.doReserve(it) }
@@ -489,20 +514,20 @@ class GoldenRecordTaskLegacyServiceMapper(
 
         return reservedTasks
             .map { task ->
-                TaskStepReservationEntryDto(
+                TaskStepReservationEntryDtoV6(
                     task.uuid.toString(),
                     task.gateRecord.publicId.toString(),
                     toBusinessPartnerResult(task.businessPartner)
                 )
             }
-            .let { reservations -> TaskStepReservationResponse(reservations, pendingTimeout) }
+            .let { reservations -> TaskStepReservationResponseV6(reservations, pendingTimeout) }
     }
 
     private fun calculateTaskPendingTimeout(task: GoldenRecordTaskDb) =
         task.createdAt.instant.plus(taskConfigProperties.taskPendingTimeout)
 
     @Transactional
-    fun resolveStepResults(resultRequest: TaskStepResultRequest) {
+    fun resolveStepResults(resultRequest: TaskStepResultRequestV6) {
         logger.debug { "Step results for reserved golden record tasks: executing resolveStepResults() with parameters $resultRequest" }
         val uuids = resultRequest.results.map { toUUID(it.taskId) }
         val foundTasks = taskRepository.findByUuidIn(uuids.toSet()).also { taskRepository.fetchBusinessPartnerData(it) }
@@ -512,8 +537,8 @@ class GoldenRecordTaskLegacyServiceMapper(
             .map { resultEntry -> Pair(foundTasksByUuid[resultEntry.taskId] ?: throw BpdmTaskNotFoundException(resultEntry.taskId), resultEntry) }
             .filterNot { (task, _) -> task.processingState.resultState == GoldenRecordTaskDb.ResultState.Aborted }
             .mapNotNull { (task, resultEntry) ->
-                val step = resultRequest.step
-                val errors = resultEntry.errors
+                val step = resultRequest.step.toTaskStep()
+                val errors = resultEntry.errors.map { it.toTaskErrorDto() }
                 val resultBusinessPartner = resultEntry.businessPartner
 
                 when{
@@ -522,7 +547,7 @@ class GoldenRecordTaskLegacyServiceMapper(
                 }
             }
 
-        logResolvedTasks(resolvedTasks, resultRequest.step)
+        logResolvedTasks(resolvedTasks, resultRequest.step.toTaskStep())
     }
 
     private fun logResolvedTasks(resolvedTasks: List<GoldenRecordTaskDb>, step: TaskStep) {
@@ -546,7 +571,7 @@ class GoldenRecordTaskLegacyServiceMapper(
     fun resolveTaskStepToSuccess(
         task: GoldenRecordTaskDb,
         step: TaskStep,
-        resultBusinessPartner: BusinessPartner
+        resultBusinessPartner: BusinessPartnerV6
     ): GoldenRecordTaskDb? {
         logger.debug { "Executing doResolveTaskToSuccess() with parameters $task // $step and $resultBusinessPartner" }
         val state = task.processingState
@@ -613,7 +638,7 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     }
 
-    fun searchTaskStates(stateRequest: TaskStateRequest): TaskStateResponse {
+    fun searchTaskStates(stateRequest: TaskStateRequestV6): TaskStateResponseV6 {
         logger.debug { "Search for the state of golden record task: executing searchTaskStates() with parameters $stateRequest" }
         val requestsByTaskId = stateRequest.entries.associateBy { it.taskId }
 
@@ -622,8 +647,92 @@ class GoldenRecordTaskLegacyServiceMapper(
             .also { tasks -> taskRepository.fetchBusinessPartnerData(tasks) }
             .filter { task -> requestsByTaskId[task.uuid.toString()]?.recordId == task.gateRecord.privateId.toString() }
             .map { task -> responseToClientState(task, calculateTaskRetentionTimeout(task)) }
-            .let { TaskStateResponse(tasks = it) }
+            .let { TaskStateResponseV6(tasks = it) }
     }
+
+    fun searchTaskResultStates(stateRequest: TaskResultStateSearchRequestV6): TaskResultStateSearchResponseV6 {
+        val resultStates = stateRequest.taskIds
+            .map { toUUID(it) }
+            .let { uuids -> taskRepository.findByUuidIn(uuids.toSet()).associateBy { it.uuid } }
+            .let { tasksByUuid ->
+                stateRequest.taskIds.map { taskId ->
+                    tasksByUuid[toUUID(taskId)]?.processingState?.resultState?.let(::toResponseResultState)
+                }
+            }
+
+        return TaskResultStateSearchResponseV6(resultStates)
+    }
+
+    private fun TaskStepV6.toTaskStep() =
+        when (this) {
+            TaskStepV6.CleanAndSync -> TaskStep.CleanAndSync
+            TaskStepV6.PoolSync -> TaskStep.PoolSync
+            TaskStepV6.Clean -> TaskStep.Clean
+        }
+
+    private fun TaskStep.toResponseTaskStep() =
+        when (this) {
+            TaskStep.CleanAndSync -> TaskStepV6.CleanAndSync
+            TaskStep.PoolSync -> TaskStepV6.PoolSync
+            TaskStep.Clean -> TaskStepV6.Clean
+        }
+
+    private fun org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.toResponseTaskErrorType() =
+        when (this) {
+            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.Timeout -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.Timeout
+            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.Unspecified -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.Unspecified
+            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.NaturalPersonError -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.NaturalPersonError
+            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BpnErrorNotFound -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BpnErrorNotFound
+            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BpnErrorTooManyOptions -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BpnErrorTooManyOptions
+            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.MandatoryFieldValidationFailed -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.MandatoryFieldValidationFailed
+            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BlacklistCountryPresent -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BlacklistCountryPresent
+            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.UnknownSpecialCharacters -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.UnknownSpecialCharacters
+        }
+
+    private fun org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.toNamePartType() =
+        when (this) {
+            org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.LegalName -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.LegalName
+            org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.ShortName -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.ShortName
+            org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.LegalForm -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.LegalForm
+            org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.SiteName -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.SiteName
+            org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.AddressName -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.AddressName
+        }
+
+    private fun org.eclipse.tractusx.orchestrator.api.model.NamePartType.toResponseNamePartType() =
+        when (this) {
+            org.eclipse.tractusx.orchestrator.api.model.NamePartType.LegalName -> org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.LegalName
+            org.eclipse.tractusx.orchestrator.api.model.NamePartType.ShortName -> org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.ShortName
+            org.eclipse.tractusx.orchestrator.api.model.NamePartType.LegalForm -> org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.LegalForm
+            org.eclipse.tractusx.orchestrator.api.model.NamePartType.SiteName -> org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.SiteName
+            org.eclipse.tractusx.orchestrator.api.model.NamePartType.AddressName -> org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.AddressName
+        }
+
+    private fun org.eclipse.tractusx.orchestrator.api.v6.model.BpnReferenceTypeV6.toBpnReferenceType() =
+        when (this) {
+            org.eclipse.tractusx.orchestrator.api.v6.model.BpnReferenceTypeV6.Bpn -> org.eclipse.tractusx.orchestrator.api.model.BpnReferenceType.Bpn
+            org.eclipse.tractusx.orchestrator.api.v6.model.BpnReferenceTypeV6.BpnRequestIdentifier -> org.eclipse.tractusx.orchestrator.api.model.BpnReferenceType.BpnRequestIdentifier
+        }
+
+    private fun org.eclipse.tractusx.orchestrator.api.model.BpnReferenceType.toResponseBpnReferenceType() =
+        when (this) {
+            org.eclipse.tractusx.orchestrator.api.model.BpnReferenceType.Bpn -> org.eclipse.tractusx.orchestrator.api.v6.model.BpnReferenceTypeV6.Bpn
+            org.eclipse.tractusx.orchestrator.api.model.BpnReferenceType.BpnRequestIdentifier -> org.eclipse.tractusx.orchestrator.api.v6.model.BpnReferenceTypeV6.BpnRequestIdentifier
+        }
+
+    private fun TaskErrorDtoV6.toTaskErrorDto() =
+        org.eclipse.tractusx.orchestrator.api.model.TaskErrorDto(
+            type = when (type) {
+                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.Timeout -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.Timeout
+                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.Unspecified -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.Unspecified
+                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.NaturalPersonError -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.NaturalPersonError
+                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BpnErrorNotFound -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BpnErrorNotFound
+                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BpnErrorTooManyOptions -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BpnErrorTooManyOptions
+                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.MandatoryFieldValidationFailed -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.MandatoryFieldValidationFailed
+                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BlacklistCountryPresent -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BlacklistCountryPresent
+                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.UnknownSpecialCharacters -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.UnknownSpecialCharacters
+            },
+            description = description
+        )
 }
 
 private fun Collection<GoldenRecordTaskDb>.toLogIdentifiers() =
