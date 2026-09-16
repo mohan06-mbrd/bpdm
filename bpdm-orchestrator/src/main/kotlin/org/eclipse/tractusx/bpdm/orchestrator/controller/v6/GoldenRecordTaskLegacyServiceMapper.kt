@@ -314,7 +314,11 @@ class GoldenRecordTaskLegacyServiceMapper(
         }
 
     fun toResponseCategorizedNameParts(nameParts: List<NamePartDb>) =
-        nameParts.filter { it.type != null }.map { NamePartV6(it.name, it.type!!.toResponseNamePartType()) }
+        nameParts.mapNotNull { namePart ->
+            namePart.type?.let { type ->
+                NamePartV6(namePart.name, type.toResponseNamePartType())
+            }
+        }
 
     fun toResponseUncategorizedProperties(businessPartner: GoldenRecordTaskDb.BusinessPartner) =
         UncategorizedPropertiesV6(
@@ -444,7 +448,7 @@ class GoldenRecordTaskLegacyServiceMapper(
                 confidenceCriteria = toResponseConfidence(businessPartner, ConfidenceCriteriaDb.Scope.LegalEntity),
                 isCatenaXMemberData = isCatenaXMemberData,
                 hasChanged = legalEntityHasChanged,
-                legalAddress = toResponsePostalAddressOrEmpty(businessPartner, PostalAddressDb.Scope.LegalAddress)!!
+                legalAddress = toResponsePostalAddressOrEmpty(businessPartner, PostalAddressDb.Scope.LegalAddress) ?: PostalAddressV6.empty
             )
         }
     fun toResponsePostalAddressOrEmpty(businessPartner: GoldenRecordTaskDb.BusinessPartner, scope: PostalAddressDb.Scope) =

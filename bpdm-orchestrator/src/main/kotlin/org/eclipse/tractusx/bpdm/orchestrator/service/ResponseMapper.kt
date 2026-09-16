@@ -96,7 +96,7 @@ class ResponseMapper {
                 hasChanged = legalEntityHasChanged,
                 ownershipUltimate = ownershipUltimate,
                 ultimateOwnerBpnl = ultimateOwnerBpnl,
-                legalAddress = toPostalAddressOrEmpty(businessPartner, PostalAddressDb.Scope.LegalAddress)!!,
+                legalAddress = toPostalAddressOrEmpty(businessPartner, PostalAddressDb.Scope.LegalAddress) ?: PostalAddress.empty,
                 scriptVariants = toLegalEntityScriptVariants(businessPartner),
                 goldenRecordRelations = toLegalEntityGoldenRecordRelations(businessPartner),
                 updatedAt = legalEntityUpdatedAt?.instant
@@ -122,7 +122,11 @@ class ResponseMapper {
 
 
     fun toCategorizedNameParts(nameParts: List<NamePartDb>) =
-        nameParts.filter { it.type != null }.map { NamePart(it.name, it.type!!) }
+        nameParts.mapNotNull { namePart ->
+            namePart.type?.let { type ->
+                NamePart(namePart.name, type)
+            }
+        }
 
     fun toUncategorizedNameParts(nameParts: List<NamePartDb>) =
         nameParts.filter { it.type == null }.map { it.name }
