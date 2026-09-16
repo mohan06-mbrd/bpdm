@@ -21,6 +21,7 @@ package org.eclipse.tractusx.bpdm.orchestrator.service
 
 import org.eclipse.tractusx.bpdm.orchestrator.service.operation.StepSecurityOperation
 import org.eclipse.tractusx.orchestrator.api.model.TaskStep
+import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepV6
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 
@@ -40,4 +41,23 @@ class StepSecurityService(
     fun assertHasResultAuthority(authentication: Authentication, step: TaskStep) {
         securityOperation.assertHasResultAuthority(authentication, step)
     }
+
+    //Is being used by Pre-Authorize annotations for V6 API
+    @Suppress("unused")
+    fun assertHasReservationAuthority(authentication: Authentication, step: TaskStepV6) {
+        securityOperation.assertHasReservationAuthority(authentication, step.toTaskStep())
+    }
+
+    //Is being used by Pre-Authorize annotations for V6 API
+    @Suppress("unused")
+    fun assertHasResultAuthority(authentication: Authentication, step: TaskStepV6) {
+        securityOperation.assertHasResultAuthority(authentication, step.toTaskStep())
+    }
+
+    private fun TaskStepV6.toTaskStep() =
+        when (this) {
+            TaskStepV6.CleanAndSync -> TaskStep.CleanAndSync
+            TaskStepV6.PoolSync -> TaskStep.PoolSync
+            TaskStepV6.Clean -> TaskStep.Clean
+        }
 }
