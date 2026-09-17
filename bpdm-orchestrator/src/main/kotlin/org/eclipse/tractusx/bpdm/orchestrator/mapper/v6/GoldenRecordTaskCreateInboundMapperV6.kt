@@ -19,11 +19,24 @@
 
 package org.eclipse.tractusx.bpdm.orchestrator.mapper.v6
 
-import org.eclipse.tractusx.bpdm.orchestrator.mapper.BusinessPartnerRequestMapper
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.AlternativeAddressRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.BpnReferenceRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.BpnReferenceTypeRequest
 import org.eclipse.tractusx.bpdm.orchestrator.model.request.BusinessPartnerRequest
-import org.eclipse.tractusx.bpdm.orchestrator.model.request.LegalEntityRequest
-import org.eclipse.tractusx.bpdm.orchestrator.model.request.PostalAddressWithScriptVariantsRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.BusinessStateRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.ConfidenceCriteriaRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.GeoCoordinateRequest
 import org.eclipse.tractusx.bpdm.orchestrator.model.request.GoldenRecordTaskCreateRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.IdentifierRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.LegalEntityRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.NamePartRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.NamePartTypeRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.PhysicalAddressRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.PostalAddressRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.PostalAddressWithScriptVariantsRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.SiteRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.StreetRequest
+import org.eclipse.tractusx.bpdm.orchestrator.model.request.UncategorizedPropertiesRequest
 import org.eclipse.tractusx.orchestrator.api.v6.model.AlternativeAddressV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.BpnReferenceTypeV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.BusinessPartnerV6
@@ -44,13 +57,11 @@ import org.springframework.stereotype.Component
 
 /**
  * Translates the fully isolated V6 create-task request entry into the unified [GoldenRecordTaskCreateRequest].
- * V6 now owns its entire DTO graph, so this mapper explicitly converts every V6 type to the internal request model
- * while defaulting the V7-only/internal fields that do not exist on the frozen V6 contract.
+ * V6 now owns its entire DTO graph, so this mapper converts directly to the request model without passing
+ * through any V7 DTOs.
  */
 @Component
-class GoldenRecordTaskCreateInboundMapperV6(
-    private val businessPartnerRequestMapper: BusinessPartnerRequestMapper
-) {
+class GoldenRecordTaskCreateInboundMapperV6 {
 
     fun toRequest(entry: TaskCreateRequestEntryV6): GoldenRecordTaskCreateRequest =
         GoldenRecordTaskCreateRequest(
@@ -98,21 +109,19 @@ class GoldenRecordTaskCreateInboundMapperV6(
         }
 
     private fun toNamePartRequest(namePart: NamePartV6) =
-        businessPartnerRequestMapper.toNamePartRequest(
-            org.eclipse.tractusx.orchestrator.api.model.NamePart(
-                name = namePart.name,
-                type = when (namePart.type) {
-                    NamePartTypeV6.LegalName -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.LegalName
-                    NamePartTypeV6.ShortName -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.ShortName
-                    NamePartTypeV6.LegalForm -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.LegalForm
-                    NamePartTypeV6.SiteName -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.SiteName
-                    NamePartTypeV6.AddressName -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.AddressName
-                }
-            )
+        NamePartRequest(
+            name = namePart.name,
+            type = when (namePart.type) {
+                NamePartTypeV6.LegalName -> NamePartTypeRequest.LegalName
+                NamePartTypeV6.ShortName -> NamePartTypeRequest.ShortName
+                NamePartTypeV6.LegalForm -> NamePartTypeRequest.LegalForm
+                NamePartTypeV6.SiteName -> NamePartTypeRequest.SiteName
+                NamePartTypeV6.AddressName -> NamePartTypeRequest.AddressName
+            }
         )
 
     private fun toUncategorizedPropertiesRequest(uncategorized: UncategorizedPropertiesV6) =
-        org.eclipse.tractusx.bpdm.orchestrator.model.request.UncategorizedPropertiesRequest(
+        UncategorizedPropertiesRequest(
             nameParts = uncategorized.nameParts,
             identifiers = uncategorized.identifiers.map(::toIdentifierRequest),
             states = uncategorized.states.map(::toBusinessStateRequest),
@@ -125,7 +134,7 @@ class GoldenRecordTaskCreateInboundMapperV6(
         )
 
     private fun toSiteRequest(site: SiteV6) =
-        org.eclipse.tractusx.bpdm.orchestrator.model.request.SiteRequest(
+        SiteRequest(
             bpnReference = toBpnReferenceRequest(site.bpnReference),
             siteName = site.siteName,
             states = site.states.map(::toBusinessStateRequest),
@@ -138,115 +147,103 @@ class GoldenRecordTaskCreateInboundMapperV6(
         )
 
     private fun toIdentifierRequest(identifier: IdentifierV6) =
-        businessPartnerRequestMapper.toIdentifierRequest(
-            org.eclipse.tractusx.orchestrator.api.model.Identifier(identifier.value, identifier.type, identifier.issuingBody)
+        IdentifierRequest(
+            value = identifier.value,
+            type = identifier.type,
+            issuingBody = identifier.issuingBody
         )
 
     private fun toBusinessStateRequest(state: BusinessStateV6) =
-        businessPartnerRequestMapper.toBusinessStateRequest(
-            org.eclipse.tractusx.orchestrator.api.model.BusinessState(state.validFrom, state.validTo, state.type)
+        BusinessStateRequest(
+            validFrom = state.validFrom,
+            validTo = state.validTo,
+            type = state.type
         )
 
     private fun toConfidenceCriteriaRequest(confidenceCriteria: ConfidenceCriteriaV6) =
-        businessPartnerRequestMapper.toConfidenceCriteriaRequest(
-            org.eclipse.tractusx.orchestrator.api.model.ConfidenceCriteria(
-                confidenceCriteria.sharedByOwner,
-                confidenceCriteria.checkedByExternalDataSource,
-                confidenceCriteria.numberOfSharingMembers,
-                confidenceCriteria.lastConfidenceCheckAt,
-                confidenceCriteria.nextConfidenceCheckAt,
-                confidenceCriteria.confidenceLevel
-            )
+        ConfidenceCriteriaRequest(
+            sharedByOwner = confidenceCriteria.sharedByOwner,
+            checkedByExternalDataSource = confidenceCriteria.checkedByExternalDataSource,
+            numberOfSharingMembers = confidenceCriteria.numberOfSharingMembers,
+            lastConfidenceCheckAt = confidenceCriteria.lastConfidenceCheckAt,
+            nextConfidenceCheckAt = confidenceCriteria.nextConfidenceCheckAt,
+            confidenceLevel = confidenceCriteria.confidenceLevel
         )
 
     private fun toBpnReferenceRequest(bpnReference: org.eclipse.tractusx.orchestrator.api.v6.model.BpnReferenceV6) =
-        businessPartnerRequestMapper.toBpnReferenceRequest(
-            org.eclipse.tractusx.orchestrator.api.model.BpnReference(
-                referenceValue = bpnReference.referenceValue,
-                desiredBpn = bpnReference.desiredBpn,
-                referenceType = bpnReference.referenceType?.let {
-                    when (it) {
-                        BpnReferenceTypeV6.Bpn -> org.eclipse.tractusx.orchestrator.api.model.BpnReferenceType.Bpn
-                        BpnReferenceTypeV6.BpnRequestIdentifier -> org.eclipse.tractusx.orchestrator.api.model.BpnReferenceType.BpnRequestIdentifier
-                    }
+        BpnReferenceRequest(
+            referenceValue = bpnReference.referenceValue,
+            desiredBpn = bpnReference.desiredBpn,
+            referenceType = bpnReference.referenceType?.let {
+                when (it) {
+                    BpnReferenceTypeV6.Bpn -> BpnReferenceTypeRequest.Bpn
+                    BpnReferenceTypeV6.BpnRequestIdentifier -> BpnReferenceTypeRequest.BpnRequestIdentifier
                 }
-            )
+            }
         )
 
     private fun toPostalAddressRequest(postalAddress: PostalAddressV6) =
-        businessPartnerRequestMapper.toPostalAddressRequest(
-            org.eclipse.tractusx.orchestrator.api.model.PostalAddress(
-                bpnReference = org.eclipse.tractusx.orchestrator.api.model.BpnReference(
-                    postalAddress.bpnReference.referenceValue,
-                    postalAddress.bpnReference.desiredBpn,
-                    postalAddress.bpnReference.referenceType?.let {
-                        when (it) {
-                            BpnReferenceTypeV6.Bpn -> org.eclipse.tractusx.orchestrator.api.model.BpnReferenceType.Bpn
-                            BpnReferenceTypeV6.BpnRequestIdentifier -> org.eclipse.tractusx.orchestrator.api.model.BpnReferenceType.BpnRequestIdentifier
-                        }
-                    }
-                ),
-                addressName = postalAddress.addressName,
-                identifiers = postalAddress.identifiers.map { org.eclipse.tractusx.orchestrator.api.model.Identifier(it.value, it.type, it.issuingBody) },
-                states = postalAddress.states.map { org.eclipse.tractusx.orchestrator.api.model.BusinessState(it.validFrom, it.validTo, it.type) },
-                confidenceCriteria = org.eclipse.tractusx.orchestrator.api.model.ConfidenceCriteria(
-                    postalAddress.confidenceCriteria.sharedByOwner,
-                    postalAddress.confidenceCriteria.checkedByExternalDataSource,
-                    postalAddress.confidenceCriteria.numberOfSharingMembers,
-                    postalAddress.confidenceCriteria.lastConfidenceCheckAt,
-                    postalAddress.confidenceCriteria.nextConfidenceCheckAt,
-                    postalAddress.confidenceCriteria.confidenceLevel
-                ),
-                physicalAddress = org.eclipse.tractusx.orchestrator.api.model.PhysicalAddress(
-                    geographicCoordinates = org.eclipse.tractusx.orchestrator.api.model.GeoCoordinate(
-                        postalAddress.physicalAddress.geographicCoordinates.longitude,
-                        postalAddress.physicalAddress.geographicCoordinates.latitude,
-                        postalAddress.physicalAddress.geographicCoordinates.altitude
-                    ),
-                    country = postalAddress.physicalAddress.country,
-                    administrativeAreaLevel1 = postalAddress.physicalAddress.administrativeAreaLevel1,
-                    administrativeAreaLevel2 = postalAddress.physicalAddress.administrativeAreaLevel2,
-                    administrativeAreaLevel3 = postalAddress.physicalAddress.administrativeAreaLevel3,
-                    postalCode = postalAddress.physicalAddress.postalCode,
-                    city = postalAddress.physicalAddress.city,
-                    district = postalAddress.physicalAddress.district,
-                    street = org.eclipse.tractusx.orchestrator.api.model.Street(
-                        postalAddress.physicalAddress.street.name,
-                        postalAddress.physicalAddress.street.houseNumber,
-                        postalAddress.physicalAddress.street.houseNumberSupplement,
-                        postalAddress.physicalAddress.street.milestone,
-                        postalAddress.physicalAddress.street.direction,
-                        postalAddress.physicalAddress.street.namePrefix,
-                        postalAddress.physicalAddress.street.additionalNamePrefix,
-                        postalAddress.physicalAddress.street.nameSuffix,
-                        postalAddress.physicalAddress.street.additionalNameSuffix
-                    ),
-                    companyPostalCode = postalAddress.physicalAddress.companyPostalCode,
-                    industrialZone = postalAddress.physicalAddress.industrialZone,
-                    building = postalAddress.physicalAddress.building,
-                    floor = postalAddress.physicalAddress.floor,
-                    door = postalAddress.physicalAddress.door,
-                    taxJurisdictionCode = postalAddress.physicalAddress.taxJurisdictionCode
-                ),
-                alternativeAddress = postalAddress.alternativeAddress?.let {
-                    org.eclipse.tractusx.orchestrator.api.model.AlternativeAddress(
-                        geographicCoordinates = org.eclipse.tractusx.orchestrator.api.model.GeoCoordinate(
-                            it.geographicCoordinates.longitude,
-                            it.geographicCoordinates.latitude,
-                            it.geographicCoordinates.altitude
-                        ),
-                        country = it.country,
-                        administrativeAreaLevel1 = it.administrativeAreaLevel1,
-                        postalCode = it.postalCode,
-                        city = it.city,
-                        deliveryServiceType = it.deliveryServiceType,
-                        deliveryServiceQualifier = it.deliveryServiceQualifier,
-                        deliveryServiceNumber = it.deliveryServiceNumber
-                    )
-                },
-                hasChanged = postalAddress.hasChanged,
-                goldenRecordRelations = emptyList(),
-                updatedAt = null
-            )
+        PostalAddressRequest(
+            bpnReference = toBpnReferenceRequest(postalAddress.bpnReference),
+            addressName = postalAddress.addressName,
+            identifiers = postalAddress.identifiers.map(::toIdentifierRequest),
+            states = postalAddress.states.map(::toBusinessStateRequest),
+            confidenceCriteria = toConfidenceCriteriaRequest(postalAddress.confidenceCriteria),
+            physicalAddress = toPhysicalAddressRequest(postalAddress.physicalAddress),
+            alternativeAddress = postalAddress.alternativeAddress?.let(::toAlternativeAddressRequest),
+            hasChanged = postalAddress.hasChanged,
+            goldenRecordRelations = emptyList(),
+            updatedAt = null
+        )
+
+    private fun toPhysicalAddressRequest(physicalAddress: PhysicalAddressV6) =
+        PhysicalAddressRequest(
+            geographicCoordinates = toGeoCoordinateRequest(physicalAddress.geographicCoordinates),
+            country = physicalAddress.country,
+            administrativeAreaLevel1 = physicalAddress.administrativeAreaLevel1,
+            administrativeAreaLevel2 = physicalAddress.administrativeAreaLevel2,
+            administrativeAreaLevel3 = physicalAddress.administrativeAreaLevel3,
+            postalCode = physicalAddress.postalCode,
+            city = physicalAddress.city,
+            district = physicalAddress.district,
+            street = toStreetRequest(physicalAddress.street),
+            companyPostalCode = physicalAddress.companyPostalCode,
+            industrialZone = physicalAddress.industrialZone,
+            building = physicalAddress.building,
+            floor = physicalAddress.floor,
+            door = physicalAddress.door,
+            taxJurisdictionCode = physicalAddress.taxJurisdictionCode
+        )
+
+    private fun toAlternativeAddressRequest(alternativeAddress: AlternativeAddressV6) =
+        AlternativeAddressRequest(
+            geographicCoordinates = toGeoCoordinateRequest(alternativeAddress.geographicCoordinates),
+            country = alternativeAddress.country,
+            administrativeAreaLevel1 = alternativeAddress.administrativeAreaLevel1,
+            postalCode = alternativeAddress.postalCode,
+            city = alternativeAddress.city,
+            deliveryServiceType = alternativeAddress.deliveryServiceType,
+            deliveryServiceQualifier = alternativeAddress.deliveryServiceQualifier,
+            deliveryServiceNumber = alternativeAddress.deliveryServiceNumber
+        )
+
+    private fun toGeoCoordinateRequest(geoCoordinate: GeoCoordinateV6) =
+        GeoCoordinateRequest(
+            longitude = geoCoordinate.longitude,
+            latitude = geoCoordinate.latitude,
+            altitude = geoCoordinate.altitude
+        )
+
+    private fun toStreetRequest(street: StreetV6) =
+        StreetRequest(
+            name = street.name,
+            houseNumber = street.houseNumber,
+            houseNumberSupplement = street.houseNumberSupplement,
+            milestone = street.milestone,
+            direction = street.direction,
+            namePrefix = street.namePrefix,
+            additionalNamePrefix = street.additionalNamePrefix,
+            nameSuffix = street.nameSuffix,
+            additionalNameSuffix = street.additionalNameSuffix
         )
 }

@@ -19,6 +19,7 @@
 
 package org.eclipse.tractusx.bpdm.orchestrator.service
 
+import org.eclipse.tractusx.bpdm.orchestrator.mapper.v6.TaskV6Mapper.toTaskStep
 import org.eclipse.tractusx.bpdm.orchestrator.service.operation.StepSecurityOperation
 import org.eclipse.tractusx.orchestrator.api.model.TaskStep
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepV6
@@ -54,10 +55,4 @@ class StepSecurityService(
         securityOperation.assertHasResultAuthority(authentication, step.toTaskStep())
     }
 
-    private fun TaskStepV6.toTaskStep() =
-        when (this) {
-            TaskStepV6.CleanAndSync -> TaskStep.CleanAndSync
-            TaskStepV6.PoolSync -> TaskStep.PoolSync
-            TaskStepV6.Clean -> TaskStep.Clean
-        }
 }

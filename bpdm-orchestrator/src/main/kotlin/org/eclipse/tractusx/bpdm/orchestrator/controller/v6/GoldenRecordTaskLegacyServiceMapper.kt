@@ -26,6 +26,9 @@ import org.eclipse.tractusx.bpdm.orchestrator.config.TaskConfigProperties
 import org.eclipse.tractusx.bpdm.orchestrator.entity.*
 import org.eclipse.tractusx.bpdm.orchestrator.exception.BpdmIllegalStateException
 import org.eclipse.tractusx.bpdm.orchestrator.exception.BpdmTaskNotFoundException
+import org.eclipse.tractusx.bpdm.orchestrator.mapper.v6.TaskV6Mapper.toTaskErrorType
+import org.eclipse.tractusx.bpdm.orchestrator.mapper.v6.TaskV6Mapper.toTaskStep
+import org.eclipse.tractusx.bpdm.orchestrator.mapper.v6.TaskV6Mapper.toV6
 import org.eclipse.tractusx.bpdm.orchestrator.repository.GoldenRecordTaskRepository
 import org.eclipse.tractusx.bpdm.orchestrator.repository.fetchBusinessPartnerData
 import org.eclipse.tractusx.bpdm.orchestrator.service.GoldenRecordTaskStateMachine
@@ -57,7 +60,6 @@ import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationEntryDt
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationRequestV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepReservationResponseV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepResultRequestV6
-import org.eclipse.tractusx.orchestrator.api.v6.model.TaskStepV6
 import org.eclipse.tractusx.orchestrator.api.v6.model.UncategorizedPropertiesV6
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -458,7 +460,7 @@ class GoldenRecordTaskLegacyServiceMapper(
         with(task.processingState) {
             TaskProcessingStateDtoV6(
                 resultState = toResponseResultState(resultState),
-                step = step.toResponseTaskStep(),
+                step = step.toV6(),
                 stepState = toResponseStepState(stepState),
                 errors = errors.map { toResponseTaskError(it) },
                 createdAt = task.createdAt.instant,
@@ -486,7 +488,7 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     fun toResponseTaskError(taskError: TaskErrorDb) =
         with(taskError) {
-            TaskErrorDtoV6(type = type.toResponseTaskErrorType(), description = description)
+            TaskErrorDtoV6(type = type.toV6(), description = description)
         }
 
     fun toResponseSite(businessPartner: GoldenRecordTaskDb.BusinessPartner) =
@@ -667,32 +669,6 @@ class GoldenRecordTaskLegacyServiceMapper(
         return TaskResultStateSearchResponseV6(resultStates)
     }
 
-    private fun TaskStepV6.toTaskStep() =
-        when (this) {
-            TaskStepV6.CleanAndSync -> TaskStep.CleanAndSync
-            TaskStepV6.PoolSync -> TaskStep.PoolSync
-            TaskStepV6.Clean -> TaskStep.Clean
-        }
-
-    private fun TaskStep.toResponseTaskStep() =
-        when (this) {
-            TaskStep.CleanAndSync -> TaskStepV6.CleanAndSync
-            TaskStep.PoolSync -> TaskStepV6.PoolSync
-            TaskStep.Clean -> TaskStepV6.Clean
-        }
-
-    private fun org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.toResponseTaskErrorType() =
-        when (this) {
-            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.Timeout -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.Timeout
-            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.Unspecified -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.Unspecified
-            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.NaturalPersonError -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.NaturalPersonError
-            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BpnErrorNotFound -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BpnErrorNotFound
-            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BpnErrorTooManyOptions -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BpnErrorTooManyOptions
-            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.MandatoryFieldValidationFailed -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.MandatoryFieldValidationFailed
-            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BlacklistCountryPresent -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BlacklistCountryPresent
-            org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.UnknownSpecialCharacters -> org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.UnknownSpecialCharacters
-        }
-
     private fun org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.toNamePartType() =
         when (this) {
             org.eclipse.tractusx.orchestrator.api.v6.model.NamePartTypeV6.LegalName -> org.eclipse.tractusx.orchestrator.api.model.NamePartType.LegalName
@@ -725,16 +701,7 @@ class GoldenRecordTaskLegacyServiceMapper(
 
     private fun TaskErrorDtoV6.toTaskErrorDto() =
         org.eclipse.tractusx.orchestrator.api.model.TaskErrorDto(
-            type = when (type) {
-                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.Timeout -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.Timeout
-                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.Unspecified -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.Unspecified
-                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.NaturalPersonError -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.NaturalPersonError
-                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BpnErrorNotFound -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BpnErrorNotFound
-                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BpnErrorTooManyOptions -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BpnErrorTooManyOptions
-                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.MandatoryFieldValidationFailed -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.MandatoryFieldValidationFailed
-                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.BlacklistCountryPresent -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.BlacklistCountryPresent
-                org.eclipse.tractusx.orchestrator.api.v6.model.TaskErrorTypeV6.UnknownSpecialCharacters -> org.eclipse.tractusx.orchestrator.api.model.TaskErrorType.UnknownSpecialCharacters
-            },
+            type = type.toTaskErrorType(),
             description = description
         )
 }
