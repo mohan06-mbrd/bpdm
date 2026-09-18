@@ -3404,11 +3404,11 @@
               "$ref" : "#/components/schemas/ErrorInfoAddressCreateError"
             }
           },
-          "errorCount" : {
+          "entityCount" : {
             "type" : "integer",
             "format" : "int32"
           },
-          "entityCount" : {
+          "errorCount" : {
             "type" : "integer",
             "format" : "int32"
           }
@@ -3697,11 +3697,11 @@
               "$ref" : "#/components/schemas/ErrorInfoAddressUpdateError"
             }
           },
-          "errorCount" : {
+          "entityCount" : {
             "type" : "integer",
             "format" : "int32"
           },
-          "entityCount" : {
+          "errorCount" : {
             "type" : "integer",
             "format" : "int32"
           }
@@ -5340,11 +5340,11 @@
               "$ref" : "#/components/schemas/ErrorInfoLegalEntityCreateError"
             }
           },
-          "errorCount" : {
+          "entityCount" : {
             "type" : "integer",
             "format" : "int32"
           },
-          "entityCount" : {
+          "errorCount" : {
             "type" : "integer",
             "format" : "int32"
           }
@@ -5653,11 +5653,11 @@
               "$ref" : "#/components/schemas/ErrorInfoLegalEntityUpdateError"
             }
           },
-          "errorCount" : {
+          "entityCount" : {
             "type" : "integer",
             "format" : "int32"
           },
-          "entityCount" : {
+          "errorCount" : {
             "type" : "integer",
             "format" : "int32"
           }
@@ -7767,11 +7767,11 @@
               "$ref" : "#/components/schemas/ErrorInfoSiteCreateError"
             }
           },
-          "errorCount" : {
+          "entityCount" : {
             "type" : "integer",
             "format" : "int32"
           },
-          "entityCount" : {
+          "errorCount" : {
             "type" : "integer",
             "format" : "int32"
           }
@@ -8001,11 +8001,11 @@
               "$ref" : "#/components/schemas/ErrorInfoSiteUpdateError"
             }
           },
-          "errorCount" : {
+          "entityCount" : {
             "type" : "integer",
             "format" : "int32"
           },
-          "entityCount" : {
+          "errorCount" : {
             "type" : "integer",
             "format" : "int32"
           }

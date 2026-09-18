@@ -1253,6 +1253,181 @@ paths:
                 format: binary
 components:
   schemas:
+    RelationPutEntry:
+      type: object
+      description: A request to update the content of the given business partner relation
+      properties:
+        externalId:
+          type: string
+        relationType:
+          type: string
+          enum:
+            - IsManagedBy
+            - IsAlternativeHeadquarterFor
+            - IsOwnedBy
+            - IsReplacedBy
+        businessPartnerSourceExternalId:
+          type: string
+        businessPartnerTargetExternalId:
+          type: string
+        reasonCode:
+          type:
+            - string
+            - "null"
+          description: The technical key of the reason code describing why the relation
+            was established. The list of reason codes is available from the golden
+            record Pool.
+        validityPeriods:
+          type: array
+          items:
+            $ref: "#/components/schemas/RelationValidityPeriodDto"
+    RelationPutRequest:
+      type: object
+      description: A request to upsert the contents of the given relations
+      properties:
+        relations:
+          type: array
+          items:
+            $ref: "#/components/schemas/RelationPutEntry"
+    RelationValidityPeriodDto:
+      type: object
+      properties:
+        validFrom:
+          type: string
+          format: date
+        validTo:
+          type:
+            - string
+            - "null"
+          format: date
+    GateErrorResponse:
+      type: object
+      description: Error response for invalid partner upload
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - 100 CONTINUE
+            - 101 SWITCHING_PROTOCOLS
+            - 102 PROCESSING
+            - 103 EARLY_HINTS
+            - 200 OK
+            - 201 CREATED
+            - 202 ACCEPTED
+            - 203 NON_AUTHORITATIVE_INFORMATION
+            - 204 NO_CONTENT
+            - 205 RESET_CONTENT
+            - 206 PARTIAL_CONTENT
+            - 207 MULTI_STATUS
+            - 208 ALREADY_REPORTED
+            - 226 IM_USED
+            - 300 MULTIPLE_CHOICES
+            - 301 MOVED_PERMANENTLY
+            - 302 FOUND
+            - 303 SEE_OTHER
+            - 304 NOT_MODIFIED
+            - 307 TEMPORARY_REDIRECT
+            - 308 PERMANENT_REDIRECT
+            - 400 BAD_REQUEST
+            - 401 UNAUTHORIZED
+            - 402 PAYMENT_REQUIRED
+            - 403 FORBIDDEN
+            - 404 NOT_FOUND
+            - 405 METHOD_NOT_ALLOWED
+            - 406 NOT_ACCEPTABLE
+            - 407 PROXY_AUTHENTICATION_REQUIRED
+            - 408 REQUEST_TIMEOUT
+            - 409 CONFLICT
+            - 410 GONE
+            - 411 LENGTH_REQUIRED
+            - 412 PRECONDITION_FAILED
+            - 413 CONTENT_TOO_LARGE
+            - 413 PAYLOAD_TOO_LARGE
+            - 414 URI_TOO_LONG
+            - 415 UNSUPPORTED_MEDIA_TYPE
+            - 416 REQUESTED_RANGE_NOT_SATISFIABLE
+            - 417 EXPECTATION_FAILED
+            - 418 I_AM_A_TEAPOT
+            - 421 MISDIRECTED_REQUEST
+            - 422 UNPROCESSABLE_CONTENT
+            - 422 UNPROCESSABLE_ENTITY
+            - 423 LOCKED
+            - 424 FAILED_DEPENDENCY
+            - 425 TOO_EARLY
+            - 426 UPGRADE_REQUIRED
+            - 428 PRECONDITION_REQUIRED
+            - 429 TOO_MANY_REQUESTS
+            - 431 REQUEST_HEADER_FIELDS_TOO_LARGE
+            - 451 UNAVAILABLE_FOR_LEGAL_REASONS
+            - 500 INTERNAL_SERVER_ERROR
+            - 501 NOT_IMPLEMENTED
+            - 502 BAD_GATEWAY
+            - 503 SERVICE_UNAVAILABLE
+            - 504 GATEWAY_TIMEOUT
+            - 505 HTTP_VERSION_NOT_SUPPORTED
+            - 506 VARIANT_ALSO_NEGOTIATES
+            - 507 INSUFFICIENT_STORAGE
+            - 508 LOOP_DETECTED
+            - 509 BANDWIDTH_LIMIT_EXCEEDED
+            - 510 NOT_EXTENDED
+            - 511 NETWORK_AUTHENTICATION_REQUIRED
+        error:
+          type: array
+          items:
+            type: string
+        path:
+          type: string
+    RelationDto:
+      type: object
+      description: A relation from one business partner (the source) to another business
+        partner (the target).
+      properties:
+        externalId:
+          type: string
+          description: The identifier with which to reference this relation
+        relationType:
+          type: string
+          description: The type of relation between the business partners
+          enum:
+            - IsManagedBy
+            - IsAlternativeHeadquarterFor
+            - IsOwnedBy
+            - IsReplacedBy
+        businessPartnerSourceExternalId:
+          type: string
+          description: The business partner from which the relation emerges (the source)
+        businessPartnerTargetExternalId:
+          type: string
+          description: The business partner to which this relation goes (the target)
+        validityPeriods:
+          type: array
+          items:
+            $ref: "#/components/schemas/RelationValidityPeriodDto"
+        reasonCode:
+          type:
+            - string
+            - "null"
+          description: The technical key of the reason code describing why the relation
+            was established. The list of reason codes is available from the golden
+            record Pool.
+        updatedAt:
+          type: string
+          format: date-time
+          description: The time when this relation was last modified
+        createdAt:
+          type: string
+          format: date-time
+          description: The time when this relation was created
+    RelationPutResponse:
+      type: object
+      properties:
+        upsertedRelations:
+          type: array
+          items:
+            $ref: "#/components/schemas/RelationDto"
     AdditionalSiteInputDto:
       type: object
       description: "A further site the business partner's address belongs to, next\
@@ -1268,104 +1443,6 @@ components:
             - string
             - "null"
           description: The name of the site
-    AdditionalSiteOutputDto:
-      type: object
-      description: "A further site a business partner's address belongs to, in addition\
-        \ to its primary site"
-      properties:
-        siteBpn:
-          type: string
-          description: The BPNS of the site
-        name:
-          type:
-            - string
-            - "null"
-          description: The name of the site
-      required:
-        - siteBpn
-    AddressComponentOutputDto:
-      type: object
-      description: Address properties of business partner output data
-      properties:
-        addressBpn:
-          type: string
-          description: "The BPNA of the address, on which the business partner provides\
-            \ a view."
-        name:
-          type:
-            - string
-            - "null"
-          description: "The name of the address, on which the business partner provides\
-            \ a view. This is not according to official registers but according to\
-            \ the name the sharing members agree on, such as the name of a gate or\
-            \ any other additional names that designate the address in common parlance."
-        addressType:
-          type:
-            - string
-            - "null"
-          description: "One of the address types: Legal Address, Site Main Address,\
-            \ Legal and Site Main Address, Additional Address. "
-          enum:
-            - LegalAndSiteMainAddress
-            - LegalAddress
-            - SiteMainAddress
-            - AdditionalAddress
-        physicalPostalAddress:
-          $ref: "#/components/schemas/PhysicalPostalAddressDto"
-          description: "The physical postal address of the address, on which the business\
-            \ partner provides a view, such as an office, warehouse, gate, etc."
-        alternativePostalAddress:
-          description: "The alternative postal address of the address, on which the\
-            \ business partner provides a view, for example if the goods are to be\
-            \ picked up somewhere else."
-          oneOf:
-            - $ref: "#/components/schemas/AlternativePostalAddressDto"
-            - type: "null"
-        confidenceCriteria:
-          $ref: "#/components/schemas/ConfidenceCriteriaDto"
-        states:
-          type: array
-          items:
-            $ref: "#/components/schemas/BusinessPartnerStateDto"
-        identifiers:
-          type: array
-          items:
-            $ref: "#/components/schemas/AddressIdentifierDto"
-        goldenRecordRelations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AddressGoldenRecordRelationDto"
-        updatedAt:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Timestamp when the associated address golden record was last
-            updated
-      required:
-        - bpnA
-    AddressGoldenRecordRelationDto:
-      type: object
-      properties:
-        relationType:
-          type: string
-          enum:
-            - IsReplacedBy
-        sourceBpn:
-          type: string
-        targetBpn:
-          type: string
-    AddressIdentifierDto:
-      type: object
-      description: "An address identifier (uniquely) identifies the address, such\
-        \ as the Global Location Number (GLN)."
-      properties:
-        value:
-          type: string
-          description: The value of the identifier like "0847976000005".
-        type:
-          type: string
-          description: The type of the identifier.
     AddressRepresentationInputDto:
       type: object
       properties:
@@ -1782,96 +1859,109 @@ components:
           description: "The name of the official register, where the identifier is\
             \ registered. For example, a Handelsregisternummer in Germany is only\
             \ valid with its corresponding Registergericht and Registerart."
-    BusinessPartnerInputDto:
-      type: object
-      description: Generic business partner with external id
-      properties:
-        externalId:
-          type: string
-          description: The identifier which uniquely identifies (in the internal system
-            landscape of the sharing member) the business partner.
-        nameParts:
-          type: array
-          description: The list of name parts to accommodate the different number
-            of name fields in different systems.
-          items:
-            type: string
-        identifiers:
-          type: array
-          description: The list of identifiers of the business partner. Sorted and
-            duplicates removed by the service.
-          items:
-            $ref: "#/components/schemas/BusinessPartnerIdentifierDto"
-        states:
-          type: array
-          description: The list of (temporary) states of the business partner. Sorted
-            and duplicates removed by the service.
-          items:
-            $ref: "#/components/schemas/BusinessPartnerStateDto"
-        roles:
-          type: array
-          description: "One or more of the roles, the business partner assumes with\
-            \ respect to the sharing member: Supplier, Customer. Sorted and duplicates\
-            \ removed by the service."
-          items:
-            type: string
-            enum:
-              - SUPPLIER
-              - CUSTOMER
-              - ONE_TIME_SUPPLIER
-              - ONE_TIME_CUSTOMER
-        legalEntity:
-          $ref: "#/components/schemas/LegalEntityRepresentationInputDto"
-          description: "The legal entity, on which the business partner provides a\
-            \ view."
-        site:
-          $ref: "#/components/schemas/SiteRepresentationInputDto"
-          description: "The site, on which the business partner provides a view."
-        address:
-          $ref: "#/components/schemas/AddressRepresentationInputDto"
-          description: "The address, on which the business partner provides a view. "
-        externalSequenceTimestamp:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: The timestamp indicates the last time point of change from
-            the user side
-        scriptVariants:
-          type: array
-          items:
-            $ref: "#/components/schemas/BusinessPartnerScriptVariantDto"
-        additionalSites:
-          type: array
-          description: "The further sites this business partner's address belongs\
-            \ to, next to the site in 'site'. A site is identified by its BPNS or,\
-            \ where that is unknown, by its name, which the golden record process\
-            \ resolves to an existing site or creates a new site for. An address is\
-            \ never taken away from a site it already belongs to, so removing an entry\
-            \ here has no effect."
-          items:
-            $ref: "#/components/schemas/AdditionalSiteInputDto"
-        createdAt:
-          type: string
-          format: date-time
-          description: The date when the data record has been created.
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the business partner record was last updated
-        isOwnCompanyData:
-          type: boolean
-          description: Indicates whether the sharing member claims (in the initial
-            upload) the business partner to belong to the company data of the sharing
-            member.
-      required:
-        - bpnA
-        - bpnL
-        - externalId
-        - postalAddress
     BusinessPartnerInputRequest:
       type: object
       description: Generic business partner with external id
+      example:
+        externalId: MB01
+        nameParts:
+          - ""
+        identifiers:
+          - type: EU_VAT_ID_DE
+            value: LEGAL_ENTITY
+            issuingBody: string
+        states:
+          - validFrom: 2026-09-18T15:52:12.892084
+            validTo: 2026-09-18T15:52:12.892084
+            type: ACTIVE
+        roles:
+          - SUPPLIER
+        legalEntity:
+          legalName: MBRDI
+          shortName: ""
+          legalForm: 1EQC
+          states:
+            - validFrom: 2026-09-18T15:52:12.892084
+              validTo: 2026-09-18T15:52:12.892084
+              type: ACTIVE
+        site:
+          states: []
+        address:
+          name: string
+          physicalPostalAddress:
+            geographicCoordinates:
+              longitude: 0.1
+              latitude: 0.1
+              altitude: 0.1
+            country: UNDEFINED
+            administrativeAreaLevel1: AD-02
+            administrativeAreaLevel2: string
+            administrativeAreaLevel3: string
+            postalCode: string
+            city: string
+            district: string
+            street:
+              namePrefix: string
+              additionalNamePrefix: string
+              name: string
+              nameSuffix: string
+              additionalNameSuffix: string
+              houseNumber: string
+              houseNumberSupplement: string
+              milestone: string
+              direction: string
+            companyPostalCode: string
+            industrialZone: string
+            building: string
+            floor: string
+            door: string
+            taxJurisdictionCode: string
+          alternativePostalAddress:
+            geographicCoordinates:
+              longitude: 0.1
+              latitude: 0.1
+              altitude: 0.1
+            country: UNDEFINED
+            administrativeAreaLevel1: AD-02
+            postalCode: string
+            city: string
+            deliveryServiceType: PO_BOX
+            deliveryServiceQualifier: string
+            deliveryServiceNumber: string
+          states:
+            - validFrom: 2026-09-18T15:52:12.892084
+              validTo: 2026-09-18T15:52:12.892084
+              type: ACTIVE
+        externalSequenceTimestamp: 2026-09-18T15:52:12.892084Z
+        scriptVariants:
+          - scriptCode: string
+            nameParts:
+              - string
+            legalEntity:
+              legalName: string
+              shortName: string
+            site:
+              name: string
+            address:
+              name: string
+              physicalAddress:
+                city: string
+                district: string
+                street:
+                  name: string
+                  direction: string
+                  namePrefix: string
+                  additionalNamePrefix: string
+                  nameSuffix: string
+                  additionalNameSuffix: string
+                industrialZone: string
+                building: string
+                floor: string
+                door: string
+              alternativeAddress:
+                city: string
+        additionalSites: []
+        ownCompanyData: true
       properties:
         externalId:
           type: string
@@ -1938,88 +2028,6 @@ components:
             \ here has no effect."
           items:
             $ref: "#/components/schemas/AdditionalSiteInputDto"
-        isOwnCompanyData:
-          type: boolean
-          description: Indicates whether the sharing member claims (in the initial
-            upload) the business partner to belong to the company data of the sharing
-            member.
-      required:
-        - externalId
-    BusinessPartnerOutputDto:
-      type: object
-      description: Generic business partner output with external id
-      properties:
-        externalId:
-          type: string
-          description: The identifier which uniquely identifies (in the internal system
-            landscape of the sharing member) the business partner.
-        nameParts:
-          type: array
-          description: The list of name parts to accommodate the different number
-            of name fields in different systems.
-          items:
-            type: string
-        identifiers:
-          type: array
-          description: The list of identifiers of the business partner. Sorted and
-            duplicates removed by the service.
-          items:
-            $ref: "#/components/schemas/BusinessPartnerIdentifierDto"
-        states:
-          type: array
-          description: The list of (temporary) states of the business partner. Sorted
-            and duplicates removed by the service.
-          items:
-            $ref: "#/components/schemas/BusinessPartnerStateDto"
-        roles:
-          type: array
-          description: "One or more of the roles, the business partner assumes with\
-            \ respect to the sharing member: Supplier, Customer. Sorted and duplicates\
-            \ removed by the service."
-          items:
-            type: string
-            enum:
-              - SUPPLIER
-              - CUSTOMER
-              - ONE_TIME_SUPPLIER
-              - ONE_TIME_CUSTOMER
-        legalEntity:
-          $ref: "#/components/schemas/LegalEntityRepresentationOutputDto"
-          description: "The legal entity, on which the business partner provides a\
-            \ view."
-        site:
-          description: "The site, on which the business partner provides a view."
-          oneOf:
-            - $ref: "#/components/schemas/SiteRepresentationOutputDto"
-            - type: "null"
-        address:
-          $ref: "#/components/schemas/AddressComponentOutputDto"
-          description: "The address, on which the business partner provides a view. "
-        externalSequenceTimestamp:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: The timestamp indicates the last time point of change from
-            the user side
-        scriptVariants:
-          type: array
-          items:
-            $ref: "#/components/schemas/BusinessPartnerScriptVariantDto"
-        additionalSites:
-          type: array
-          description: "The further sites this business partner's address belongs\
-            \ to, in addition to the primary 'site'."
-          items:
-            $ref: "#/components/schemas/AdditionalSiteOutputDto"
-        createdAt:
-          type: string
-          format: date-time
-          description: The date when the data record has been created.
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the business partner record was last updated
         isOwnCompanyData:
           type: boolean
           description: Indicates whether the sharing member claims (in the initial
@@ -2065,164 +2073,6 @@ components:
           enum:
             - ACTIVE
             - INACTIVE
-    ChangelogGateDto:
-      type: object
-      description: "An entry of the changelog, which is created each time a business\
-        \ partner is modified and contains data about the change. The actual new state\
-        \ of the business partner is not included."
-      properties:
-        externalId:
-          type: string
-          description: The external identifier of the business partner for which the
-            changelog entry was created.
-        timestamp:
-          type: string
-          format: date-time
-          description: The date and time when the changelog entry was created.
-        changelogType:
-          type: string
-          description: "One of the actions for which the changelog entry was created:\
-            \ create, update."
-          enum:
-            - CREATE
-            - UPDATE
-    ChangelogSearchRequest:
-      type: object
-      properties:
-        timestampAfter:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Only changelog entries created after this time. Ignored if
-            empty.
-          example: 2023-03-20T10:23:28.194Z
-        externalIds:
-          type:
-            - array
-            - "null"
-          description: Only for business partners with the given array of external
-            IDs. Ignored if empty.
-          items:
-            type: string
-          uniqueItems: true
-    ConfidenceCriteriaDto:
-      type: object
-      properties:
-        sharedByOwner:
-          type: boolean
-        checkedByExternalDataSource:
-          type: boolean
-        numberOfSharingMembers:
-          type: integer
-          format: int32
-        lastConfidenceCheckAt:
-          type: string
-          format: date-time
-        nextConfidenceCheckAt:
-          type: string
-          format: date-time
-        confidenceLevel:
-          type: integer
-          format: int32
-    ErrorInfoChangeLogOutputError:
-      type: object
-      description: Holds information about failures
-      properties:
-        errorCode:
-          type: string
-          description: Error code identifying the error
-          enum:
-            - ExternalIdNotFound
-        message:
-          type: string
-          description: Error message that explains the error
-        entityKey:
-          type:
-            - string
-            - "null"
-          description: Key (externalId) of the entity that failed
-      title: ErrorInfo
-    GateErrorResponse:
-      type: object
-      description: Error response for invalid partner upload
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-        status:
-          type: string
-          enum:
-            - 100 CONTINUE
-            - 101 SWITCHING_PROTOCOLS
-            - 102 PROCESSING
-            - 103 EARLY_HINTS
-            - 200 OK
-            - 201 CREATED
-            - 202 ACCEPTED
-            - 203 NON_AUTHORITATIVE_INFORMATION
-            - 204 NO_CONTENT
-            - 205 RESET_CONTENT
-            - 206 PARTIAL_CONTENT
-            - 207 MULTI_STATUS
-            - 208 ALREADY_REPORTED
-            - 226 IM_USED
-            - 300 MULTIPLE_CHOICES
-            - 301 MOVED_PERMANENTLY
-            - 302 FOUND
-            - 303 SEE_OTHER
-            - 304 NOT_MODIFIED
-            - 307 TEMPORARY_REDIRECT
-            - 308 PERMANENT_REDIRECT
-            - 400 BAD_REQUEST
-            - 401 UNAUTHORIZED
-            - 402 PAYMENT_REQUIRED
-            - 403 FORBIDDEN
-            - 404 NOT_FOUND
-            - 405 METHOD_NOT_ALLOWED
-            - 406 NOT_ACCEPTABLE
-            - 407 PROXY_AUTHENTICATION_REQUIRED
-            - 408 REQUEST_TIMEOUT
-            - 409 CONFLICT
-            - 410 GONE
-            - 411 LENGTH_REQUIRED
-            - 412 PRECONDITION_FAILED
-            - 413 CONTENT_TOO_LARGE
-            - 413 PAYLOAD_TOO_LARGE
-            - 414 URI_TOO_LONG
-            - 415 UNSUPPORTED_MEDIA_TYPE
-            - 416 REQUESTED_RANGE_NOT_SATISFIABLE
-            - 417 EXPECTATION_FAILED
-            - 418 I_AM_A_TEAPOT
-            - 421 MISDIRECTED_REQUEST
-            - 422 UNPROCESSABLE_CONTENT
-            - 422 UNPROCESSABLE_ENTITY
-            - 423 LOCKED
-            - 424 FAILED_DEPENDENCY
-            - 425 TOO_EARLY
-            - 426 UPGRADE_REQUIRED
-            - 428 PRECONDITION_REQUIRED
-            - 429 TOO_MANY_REQUESTS
-            - 431 REQUEST_HEADER_FIELDS_TOO_LARGE
-            - 451 UNAVAILABLE_FOR_LEGAL_REASONS
-            - 500 INTERNAL_SERVER_ERROR
-            - 501 NOT_IMPLEMENTED
-            - 502 BAD_GATEWAY
-            - 503 SERVICE_UNAVAILABLE
-            - 504 GATEWAY_TIMEOUT
-            - 505 HTTP_VERSION_NOT_SUPPORTED
-            - 506 VARIANT_ALSO_NEGOTIATES
-            - 507 INSUFFICIENT_STORAGE
-            - 508 LOOP_DETECTED
-            - 509 BANDWIDTH_LIMIT_EXCEEDED
-            - 510 NOT_EXTENDED
-            - 511 NETWORK_AUTHENTICATION_REQUIRED
-        error:
-          type: array
-          items:
-            type: string
-        path:
-          type: string
     GeoCoordinateDto:
       type: object
       description: "The exact location of the physical postal address in latitude,\
@@ -2242,20 +2092,6 @@ components:
             - "null"
           format: double
           description: "Altitude, if applicable"
-    LegalEntityGoldenRecordRelationDto:
-      type: object
-      properties:
-        relationType:
-          type: string
-          enum:
-            - IsAlternativeHeadquarterFor
-            - IsManagedBy
-            - IsOwnedBy
-            - IsReplacedBy
-        sourceBpn:
-          type: string
-        targetBpn:
-          type: string
     LegalEntityRepresentationInputDto:
       type: object
       properties:
@@ -2299,63 +2135,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BusinessPartnerStateDto"
-    LegalEntityRepresentationOutputDto:
-      type: object
-      description: Legal Entity properties of business partner output data
-      properties:
-        legalEntityBpn:
-          type: string
-          description: "The BPNL of the legal entity, on which the business partner\
-            \ provides a view."
-        legalName:
-          type:
-            - string
-            - "null"
-          description: "The name of the legal entity, on which the business partner\
-            \ provides a view, according to official registers."
-        shortName:
-          type:
-            - string
-            - "null"
-          description: "The abbreviated name of the legal entity, on which the business\
-            \ partner provides a view."
-        legalForm:
-          type:
-            - string
-            - "null"
-          description: "The legal form of the legal entity, on which the business\
-            \ partner provides a view."
-        confidenceCriteria:
-          $ref: "#/components/schemas/ConfidenceCriteriaDto"
-        ownershipUltimate:
-          type:
-            - boolean
-            - "null"
-          description: Designates whether this legal entity is the ultimate owner
-            in an ownership chain.
-        ultimateOwnerBpnl:
-          type:
-            - string
-            - "null"
-          description: The BPNL of the designated ultimate owner up in the ownership
-            chain.
-        states:
-          type: array
-          items:
-            $ref: "#/components/schemas/BusinessPartnerStateDto"
-        goldenRecordRelations:
-          type: array
-          items:
-            $ref: "#/components/schemas/LegalEntityGoldenRecordRelationDto"
-        updatedAt:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Timestamp when the associated legal entity golden record was
-            last updated
-      required:
-        - bpnL
     LegalEntityScriptVariantDto:
       type: object
       properties:
@@ -2367,216 +2146,6 @@ components:
           type:
             - string
             - "null"
-    PageChangeLogDtoChangelogGateDto:
-      type: object
-      description: Paginated collection of results
-      properties:
-        totalElements:
-          type: integer
-          format: int64
-          description: Total number of all results in all pages
-        totalPages:
-          type: integer
-          format: int32
-          description: Total number pages
-        page:
-          type: integer
-          format: int32
-          description: Current page number
-        contentSize:
-          type: integer
-          format: int32
-          description: Number of results in the page
-        content:
-          type: array
-          description: Collection of results in the page
-          items:
-            $ref: "#/components/schemas/ChangelogGateDto"
-        invalidEntries:
-          type: integer
-          format: int32
-          description: Number of entries in the page that have been omitted due to
-            being invalid (error)
-        errors:
-          type: array
-          description: Infos about the entries with errors
-          items:
-            $ref: "#/components/schemas/ErrorInfoChangeLogOutputError"
-    PageDtoBusinessPartnerInputDto:
-      type: object
-      description: Paginated collection of results
-      properties:
-        totalElements:
-          type: integer
-          format: int64
-          description: Total number of all results in all pages
-        totalPages:
-          type: integer
-          format: int32
-          description: Total number pages
-        page:
-          type: integer
-          format: int32
-          description: Current page number
-        contentSize:
-          type: integer
-          format: int32
-          description: Number of results in the page
-        content:
-          type: array
-          description: Collection of results in the page
-          items:
-            $ref: "#/components/schemas/BusinessPartnerInputDto"
-    PageDtoBusinessPartnerOutputDto:
-      type: object
-      description: Paginated collection of results
-      properties:
-        totalElements:
-          type: integer
-          format: int64
-          description: Total number of all results in all pages
-        totalPages:
-          type: integer
-          format: int32
-          description: Total number pages
-        page:
-          type: integer
-          format: int32
-          description: Current page number
-        contentSize:
-          type: integer
-          format: int32
-          description: Number of results in the page
-        content:
-          type: array
-          description: Collection of results in the page
-          items:
-            $ref: "#/components/schemas/BusinessPartnerOutputDto"
-    PageDtoRelationDto:
-      type: object
-      description: Paginated collection of results
-      properties:
-        totalElements:
-          type: integer
-          format: int64
-          description: Total number of all results in all pages
-        totalPages:
-          type: integer
-          format: int32
-          description: Total number pages
-        page:
-          type: integer
-          format: int32
-          description: Current page number
-        contentSize:
-          type: integer
-          format: int32
-          description: Number of results in the page
-        content:
-          type: array
-          description: Collection of results in the page
-          items:
-            $ref: "#/components/schemas/RelationDto"
-    PageDtoRelationOutputDto:
-      type: object
-      description: Paginated collection of results
-      properties:
-        totalElements:
-          type: integer
-          format: int64
-          description: Total number of all results in all pages
-        totalPages:
-          type: integer
-          format: int32
-          description: Total number pages
-        page:
-          type: integer
-          format: int32
-          description: Current page number
-        contentSize:
-          type: integer
-          format: int32
-          description: Number of results in the page
-        content:
-          type: array
-          description: Collection of results in the page
-          items:
-            $ref: "#/components/schemas/RelationOutputDto"
-    PageDtoRelationSharingStateDto:
-      type: object
-      description: Paginated collection of results
-      properties:
-        totalElements:
-          type: integer
-          format: int64
-          description: Total number of all results in all pages
-        totalPages:
-          type: integer
-          format: int32
-          description: Total number pages
-        page:
-          type: integer
-          format: int32
-          description: Current page number
-        contentSize:
-          type: integer
-          format: int32
-          description: Number of results in the page
-        content:
-          type: array
-          description: Collection of results in the page
-          items:
-            $ref: "#/components/schemas/RelationSharingStateDto"
-    PageDtoRelationV6Dto:
-      type: object
-      description: Paginated collection of results
-      properties:
-        totalElements:
-          type: integer
-          format: int64
-          description: Total number of all results in all pages
-        totalPages:
-          type: integer
-          format: int32
-          description: Total number pages
-        page:
-          type: integer
-          format: int32
-          description: Current page number
-        contentSize:
-          type: integer
-          format: int32
-          description: Number of results in the page
-        content:
-          type: array
-          description: Collection of results in the page
-          items:
-            $ref: "#/components/schemas/RelationV6Dto"
-    PageDtoSharingStateDto:
-      type: object
-      description: Paginated collection of results
-      properties:
-        totalElements:
-          type: integer
-          format: int64
-          description: Total number of all results in all pages
-        totalPages:
-          type: integer
-          format: int32
-          description: Total number pages
-        page:
-          type: integer
-          format: int32
-          description: Current page number
-        contentSize:
-          type: integer
-          format: int32
-          description: Number of results in the page
-        content:
-          type: array
-          description: Collection of results in the page
-          items:
-            $ref: "#/components/schemas/SharingStateDto"
     PhysicalAddressScriptVariantDto:
       type: object
       properties:
@@ -2972,403 +2541,6 @@ components:
           description: "Tax jurisdiction codes are used to identify the specific jurisdiction(s)\
             \ that a company belong to, particularly in bureaucratic processes such\
             \ as tax returns and IRS forms."
-    PostSharingStateReadyRequest:
-      type: object
-      description: Request for setting business partners into ready to be shared to
-        golden record state
-      properties:
-        externalIds:
-          type: array
-          items:
-            type: string
-    RelationDto:
-      type: object
-      description: A relation from one business partner (the source) to another business
-        partner (the target).
-      properties:
-        externalId:
-          type: string
-          description: The identifier with which to reference this relation
-        relationType:
-          type: string
-          description: The type of relation between the business partners
-          enum:
-            - IsManagedBy
-            - IsAlternativeHeadquarterFor
-            - IsOwnedBy
-            - IsReplacedBy
-        businessPartnerSourceExternalId:
-          type: string
-          description: The business partner from which the relation emerges (the source)
-        businessPartnerTargetExternalId:
-          type: string
-          description: The business partner to which this relation goes (the target)
-        validityPeriods:
-          type: array
-          items:
-            $ref: "#/components/schemas/RelationValidityPeriodDto"
-        reasonCode:
-          type:
-            - string
-            - "null"
-          description: The technical key of the reason code describing why the relation
-            was established. The list of reason codes is available from the golden
-            record Pool.
-        updatedAt:
-          type: string
-          format: date-time
-          description: The time when this relation was last modified
-        createdAt:
-          type: string
-          format: date-time
-          description: The time when this relation was created
-    RelationOutputDto:
-      type: object
-      description: A relation from one business partner (the source) to another business
-        partner (the target).
-      properties:
-        externalId:
-          type: string
-          description: The identifier with which to reference this relation
-        relationType:
-          type: string
-          description: The type of relation between the business partners
-          enum:
-            - IsAlternativeHeadquarterFor
-            - IsManagedBy
-            - IsOwnedBy
-            - IsReplacedBy
-        sourceBpn:
-          type: string
-          description: The business partner from which the relation emerges (the source)
-        targetBpn:
-          type: string
-          description: The business partner to which this relation goes (the target)
-        validityPeriods:
-          type: array
-          description: A relation validity describes a timeframe in which a relation
-            is active.
-          items:
-            $ref: "#/components/schemas/RelationValidityPeriodDto"
-        reasonCode:
-          type:
-            - string
-            - "null"
-          description: The technical key of the reason code describing why the relation
-            was established. The list of reason codes is available from the golden
-            record Pool.
-        updatedAt:
-          type: string
-          format: date-time
-          description: The time when this relation was last modified
-    RelationOutputSearchRequest:
-      type: object
-      description: Request payload containing search parameters for business partner
-        output relations
-      properties:
-        externalIds:
-          type:
-            - array
-            - "null"
-          items:
-            type: string
-        relationType:
-          type:
-            - string
-            - "null"
-          enum:
-            - IsAlternativeHeadquarterFor
-            - IsManagedBy
-            - IsOwnedBy
-            - IsReplacedBy
-        sourceBpns:
-          type:
-            - array
-            - "null"
-          items:
-            type: string
-        targetBpns:
-          type:
-            - array
-            - "null"
-          items:
-            type: string
-        updatedAtFrom:
-          type:
-            - string
-            - "null"
-          format: date-time
-    RelationPostRequest:
-      type: object
-      description: A request to create a new relation between two business partners
-      properties:
-        externalId:
-          type:
-            - string
-            - "null"
-        relationType:
-          type: string
-          enum:
-            - IsManagedBy
-            - IsAlternativeHeadquarterFor
-            - IsOwnedBy
-            - IsReplacedBy
-        businessPartnerSourceExternalId:
-          type: string
-        businessPartnerTargetExternalId:
-          type: string
-    RelationPutEntry:
-      type: object
-      description: A request to update the content of the given business partner relation
-      properties:
-        externalId:
-          type: string
-        relationType:
-          type: string
-          enum:
-            - IsManagedBy
-            - IsAlternativeHeadquarterFor
-            - IsOwnedBy
-            - IsReplacedBy
-        businessPartnerSourceExternalId:
-          type: string
-        businessPartnerTargetExternalId:
-          type: string
-        reasonCode:
-          type:
-            - string
-            - "null"
-          description: The technical key of the reason code describing why the relation
-            was established. The list of reason codes is available from the golden
-            record Pool.
-        validityPeriods:
-          type: array
-          items:
-            $ref: "#/components/schemas/RelationValidityPeriodDto"
-    RelationPutEntryV6:
-      type: object
-      description: A request to update the content of the given business partner relation
-      properties:
-        externalId:
-          type: string
-        relationType:
-          type: string
-          enum:
-            - IsManagedBy
-            - IsAlternativeHeadquarterFor
-            - IsOwnedBy
-            - IsReplacedBy
-        businessPartnerSourceExternalId:
-          type: string
-        businessPartnerTargetExternalId:
-          type: string
-        validityPeriods:
-          type: array
-          items:
-            $ref: "#/components/schemas/RelationValidityPeriodDto"
-    RelationPutRequest:
-      type: object
-      description: A request to upsert the contents of the given relations
-      properties:
-        relations:
-          type: array
-          items:
-            $ref: "#/components/schemas/RelationPutEntry"
-    RelationPutResponse:
-      type: object
-      properties:
-        upsertedRelations:
-          type: array
-          items:
-            $ref: "#/components/schemas/RelationDto"
-    RelationSearchRequest:
-      type: object
-      description: Request payload containing search parameters for business partner
-        relations
-      properties:
-        externalIds:
-          type:
-            - array
-            - "null"
-          items:
-            type: string
-        relationType:
-          type:
-            - string
-            - "null"
-          enum:
-            - IsManagedBy
-            - IsAlternativeHeadquarterFor
-            - IsOwnedBy
-            - IsReplacedBy
-        businessPartnerSourceExternalIds:
-          type:
-            - array
-            - "null"
-          items:
-            type: string
-        businessPartnerTargetExternalIds:
-          type:
-            - array
-            - "null"
-          items:
-            type: string
-        updatedAtFrom:
-          type:
-            - string
-            - "null"
-          format: date-time
-    RelationSharingStateDto:
-      type: object
-      properties:
-        externalId:
-          type: string
-          description: The external identifier of the business partner for which the
-            sharing state entry was created.
-        sharingStateType:
-          type: string
-          description: One of the sharing state types of the current sharing state.
-          enum:
-            - Ready
-            - Pending
-            - Error
-            - Success
-        sharingErrorCode:
-          type:
-            - string
-            - "null"
-          description: "One of the sharing error codes in case the current sharing\
-            \ state type is \"error\". \n* `SharingProcessError`: A general error\
-            \ occurred during the sharing process.\n* `SharingTimeout`: The processing\
-            \ took to long to complete.\n"
-          enum:
-            - SharingProcessError
-            - SharingTimeout
-        sharingErrorMessage:
-          type:
-            - string
-            - "null"
-          description: The error message in case the current sharing state type is
-            "error".
-        taskId:
-          type:
-            - string
-            - "null"
-          description: When the sharing state last changed.
-        updatedAt:
-          type: string
-          format: date-time
-          description: The orchestrator task identifier that was created
-    RelationV6Dto:
-      type: object
-      description: 'A relation from one business partner (the source) to another business
-        partner (the target). '
-      properties:
-        externalId:
-          type: string
-        relationType:
-          type: string
-          enum:
-            - IsManagedBy
-            - IsAlternativeHeadquarterFor
-            - IsOwnedBy
-            - IsReplacedBy
-        businessPartnerSourceExternalId:
-          type: string
-        businessPartnerTargetExternalId:
-          type: string
-        updatedAt:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
-    RelationValidityPeriodDto:
-      type: object
-      properties:
-        validFrom:
-          type: string
-          format: date
-        validTo:
-          type:
-            - string
-            - "null"
-          format: date
-    SharingStateDto:
-      type: object
-      description: |
-        A sharing state entry shows the progress in the sharing process and is updated each time the progress for a business partner changes. The business partner is identified by a combination of external ID and business partner type.
-      properties:
-        externalId:
-          type: string
-          description: The external identifier of the business partner for which the
-            sharing state entry was created.
-        sharingStateType:
-          type: string
-          description: One of the sharing state types of the current sharing state.
-          enum:
-            - Pending
-            - Success
-            - Error
-            - Initial
-            - Ready
-        sharingErrorCode:
-          type:
-            - string
-            - "null"
-          description: "One of the sharing error codes in case the current sharing\
-            \ state type is \"error\". \n* `NaturalPersonError`: The provided record\
-            \ contains natural person information.\n* `BpnErrorNotFound`: The provided\
-            \ record can not be matched to a legal entity or an address.\n* `BpnErrorTooManyOptions`:\
-            \ The provided record can not link to a clear legal entity.\n* `MandatoryFieldValidationFailed`:\
-            \ The provided record does not fulfill mandatory validation rules.\n*\
-            \ `BlacklistCountryPresent`: The provided record is part of a country\
-            \ that is not allowed to be processed by the GR process (example: Brazil).\n\
-            * `UnknownSpecialCharacters`: The provided record contains unallowed special\
-            \ characters."
-          enum:
-            - SharingProcessError
-            - SharingTimeout
-            - BpnNotInPool
-            - MissingTaskID
-            - NaturalPersonError
-            - BpnErrorNotFound
-            - BpnErrorTooManyOptions
-            - MandatoryFieldValidationFailed
-            - BlacklistCountryPresent
-            - UnknownSpecialCharacters
-        sharingErrorMessage:
-          type:
-            - string
-            - "null"
-          description: The error message in case the current sharing state type is
-            "error".
-        sharingProcessStarted:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: The date and time when the sharing process was started.
-        taskId:
-          type:
-            - string
-            - "null"
-          description: The orchestrator task identifier that was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: The time when the sharing state has been last updated
-    SiteGoldenRecordRelationDto:
-      type: object
-      properties:
-        relationType:
-          type: string
-          enum:
-            - IsReplacedBy
-        sourceBpn:
-          type: string
-        targetBpn:
-          type: string
     SiteRepresentationInputDto:
       type: object
       properties:
@@ -3389,37 +2561,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BusinessPartnerStateDto"
-    SiteRepresentationOutputDto:
-      type: object
-      description: Site properties of business partner output data
-      properties:
-        siteBpn:
-          type: string
-          description: "The BPNS of the site, on which the business partner provides\
-            \ a view."
-        name:
-          type:
-            - string
-            - "null"
-          description: "The name of the site, on which the business partner provides\
-            \ a view. This is not according to official registers but according to\
-            \ the name the owner chooses."
-        confidenceCriteria:
-          $ref: "#/components/schemas/ConfidenceCriteriaDto"
-        states:
-          type: array
-          items:
-            $ref: "#/components/schemas/BusinessPartnerStateDto"
-        goldenRecordRelations:
-          type: array
-          items:
-            $ref: "#/components/schemas/SiteGoldenRecordRelationDto"
-        updatedAt:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Timestamp when the associated site golden record was last updated
     SiteScriptVariantDto:
       type: object
       properties:
@@ -3427,66 +2568,6 @@ components:
           type:
             - string
             - "null"
-    StatsAddressTypesResponse:
-      type: object
-      properties:
-        legalAndSiteTotal:
-          type: integer
-          format: int32
-        legalTotal:
-          type: integer
-          format: int32
-        siteTotal:
-          type: integer
-          format: int32
-        additionalTotal:
-          type: integer
-          format: int32
-    StatsConfidenceCriteriaResponse:
-      type: object
-      properties:
-        numberOfBusinessPartnersAverage:
-          type: number
-          format: float
-        uniqueTotal:
-          type: integer
-          format: int64
-        sharedByOwnerTotal:
-          type: integer
-          format: int64
-        checkedByExternalDataSourceTotal:
-          type: integer
-          format: int64
-        confidenceLevelAverage:
-          type: number
-          format: float
-    StatsSharingStatesResponse:
-      type: object
-      properties:
-        initialTotal:
-          type: integer
-          format: int32
-        readyTotal:
-          type: integer
-          format: int32
-        pendingTotal:
-          type: integer
-          format: int32
-        successTotal:
-          type: integer
-          format: int32
-        errorTotal:
-          type: integer
-          format: int32
-    StatsStagesResponse:
-      type: object
-      properties:
-        inputTotal:
-          type: integer
-          format: int32
-        outputTotal:
-          type: integer
-          format: int32
     StreetDto:
       type: object
       description: "The street of the physical postal address, synonyms: road, avenue,\
@@ -3571,3 +2652,1022 @@ components:
           type:
             - string
             - "null"
+    BusinessPartnerInputDto:
+      type: object
+      description: Generic business partner with external id
+      properties:
+        externalId:
+          type: string
+          description: The identifier which uniquely identifies (in the internal system
+            landscape of the sharing member) the business partner.
+        nameParts:
+          type: array
+          description: The list of name parts to accommodate the different number
+            of name fields in different systems.
+          items:
+            type: string
+        identifiers:
+          type: array
+          description: The list of identifiers of the business partner. Sorted and
+            duplicates removed by the service.
+          items:
+            $ref: "#/components/schemas/BusinessPartnerIdentifierDto"
+        states:
+          type: array
+          description: The list of (temporary) states of the business partner. Sorted
+            and duplicates removed by the service.
+          items:
+            $ref: "#/components/schemas/BusinessPartnerStateDto"
+        roles:
+          type: array
+          description: "One or more of the roles, the business partner assumes with\
+            \ respect to the sharing member: Supplier, Customer. Sorted and duplicates\
+            \ removed by the service."
+          items:
+            type: string
+            enum:
+              - SUPPLIER
+              - CUSTOMER
+              - ONE_TIME_SUPPLIER
+              - ONE_TIME_CUSTOMER
+        legalEntity:
+          $ref: "#/components/schemas/LegalEntityRepresentationInputDto"
+          description: "The legal entity, on which the business partner provides a\
+            \ view."
+        site:
+          $ref: "#/components/schemas/SiteRepresentationInputDto"
+          description: "The site, on which the business partner provides a view."
+        address:
+          $ref: "#/components/schemas/AddressRepresentationInputDto"
+          description: "The address, on which the business partner provides a view. "
+        externalSequenceTimestamp:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: The timestamp indicates the last time point of change from
+            the user side
+        scriptVariants:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessPartnerScriptVariantDto"
+        additionalSites:
+          type: array
+          description: "The further sites this business partner's address belongs\
+            \ to, next to the site in 'site'. A site is identified by its BPNS or,\
+            \ where that is unknown, by its name, which the golden record process\
+            \ resolves to an existing site or creates a new site for. An address is\
+            \ never taken away from a site it already belongs to, so removing an entry\
+            \ here has no effect."
+          items:
+            $ref: "#/components/schemas/AdditionalSiteInputDto"
+        createdAt:
+          type: string
+          format: date-time
+          description: The date when the data record has been created.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the business partner record was last updated
+        isOwnCompanyData:
+          type: boolean
+          description: Indicates whether the sharing member claims (in the initial
+            upload) the business partner to belong to the company data of the sharing
+            member.
+      required:
+        - bpnA
+        - bpnL
+        - externalId
+        - postalAddress
+    RelationPutEntryV6:
+      type: object
+      description: A request to update the content of the given business partner relation
+      properties:
+        externalId:
+          type: string
+        relationType:
+          type: string
+          enum:
+            - IsManagedBy
+            - IsAlternativeHeadquarterFor
+            - IsOwnedBy
+            - IsReplacedBy
+        businessPartnerSourceExternalId:
+          type: string
+        businessPartnerTargetExternalId:
+          type: string
+        validityPeriods:
+          type: array
+          items:
+            $ref: "#/components/schemas/RelationValidityPeriodDto"
+    RelationV6Dto:
+      type: object
+      description: 'A relation from one business partner (the source) to another business
+        partner (the target). '
+      properties:
+        externalId:
+          type: string
+        relationType:
+          type: string
+          enum:
+            - IsManagedBy
+            - IsAlternativeHeadquarterFor
+            - IsOwnedBy
+            - IsReplacedBy
+        businessPartnerSourceExternalId:
+          type: string
+        businessPartnerTargetExternalId:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    RelationOutputSearchRequest:
+      type: object
+      description: Request payload containing search parameters for business partner
+        output relations
+      properties:
+        externalIds:
+          type:
+            - array
+            - "null"
+          items:
+            type: string
+        relationType:
+          type:
+            - string
+            - "null"
+          enum:
+            - IsAlternativeHeadquarterFor
+            - IsManagedBy
+            - IsOwnedBy
+            - IsReplacedBy
+        sourceBpns:
+          type:
+            - array
+            - "null"
+          items:
+            type: string
+        targetBpns:
+          type:
+            - array
+            - "null"
+          items:
+            type: string
+        updatedAtFrom:
+          type:
+            - string
+            - "null"
+          format: date-time
+    PageDtoRelationOutputDto:
+      type: object
+      description: Paginated collection of results
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of all results in all pages
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number pages
+        page:
+          type: integer
+          format: int32
+          description: Current page number
+        contentSize:
+          type: integer
+          format: int32
+          description: Number of results in the page
+        content:
+          type: array
+          description: Collection of results in the page
+          items:
+            $ref: "#/components/schemas/RelationOutputDto"
+    RelationOutputDto:
+      type: object
+      description: A relation from one business partner (the source) to another business
+        partner (the target).
+      properties:
+        externalId:
+          type: string
+          description: The identifier with which to reference this relation
+        relationType:
+          type: string
+          description: The type of relation between the business partners
+          enum:
+            - IsAlternativeHeadquarterFor
+            - IsManagedBy
+            - IsOwnedBy
+            - IsReplacedBy
+        sourceBpn:
+          type: string
+          description: The business partner from which the relation emerges (the source)
+        targetBpn:
+          type: string
+          description: The business partner to which this relation goes (the target)
+        validityPeriods:
+          type: array
+          description: A relation validity describes a timeframe in which a relation
+            is active.
+          items:
+            $ref: "#/components/schemas/RelationValidityPeriodDto"
+        reasonCode:
+          type:
+            - string
+            - "null"
+          description: The technical key of the reason code describing why the relation
+            was established. The list of reason codes is available from the golden
+            record Pool.
+        updatedAt:
+          type: string
+          format: date-time
+          description: The time when this relation was last modified
+    ChangelogSearchRequest:
+      type: object
+      properties:
+        timestampAfter:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Only changelog entries created after this time. Ignored if
+            empty.
+          example: 2023-03-20T10:23:28.194Z
+        externalIds:
+          type:
+            - array
+            - "null"
+          description: Only for business partners with the given array of external
+            IDs. Ignored if empty.
+          items:
+            type: string
+          uniqueItems: true
+    ChangelogGateDto:
+      type: object
+      description: "An entry of the changelog, which is created each time a business\
+        \ partner is modified and contains data about the change. The actual new state\
+        \ of the business partner is not included."
+      properties:
+        externalId:
+          type: string
+          description: The external identifier of the business partner for which the
+            changelog entry was created.
+        timestamp:
+          type: string
+          format: date-time
+          description: The date and time when the changelog entry was created.
+        changelogType:
+          type: string
+          description: "One of the actions for which the changelog entry was created:\
+            \ create, update."
+          enum:
+            - CREATE
+            - UPDATE
+    ErrorInfoChangeLogOutputError:
+      type: object
+      description: Holds information about failures
+      properties:
+        errorCode:
+          type: string
+          description: Error code identifying the error
+          enum:
+            - ExternalIdNotFound
+        message:
+          type: string
+          description: Error message that explains the error
+        entityKey:
+          type:
+            - string
+            - "null"
+          description: Key (externalId) of the entity that failed
+      title: ErrorInfo
+    PageChangeLogDtoChangelogGateDto:
+      type: object
+      description: Paginated collection of results
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of all results in all pages
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number pages
+        page:
+          type: integer
+          format: int32
+          description: Current page number
+        contentSize:
+          type: integer
+          format: int32
+          description: Number of results in the page
+        content:
+          type: array
+          description: Collection of results in the page
+          items:
+            $ref: "#/components/schemas/ChangelogGateDto"
+        invalidEntries:
+          type: integer
+          format: int32
+          description: Number of entries in the page that have been omitted due to
+            being invalid (error)
+        errors:
+          type: array
+          description: Infos about the entries with errors
+          items:
+            $ref: "#/components/schemas/ErrorInfoChangeLogOutputError"
+    AdditionalSiteOutputDto:
+      type: object
+      description: "A further site a business partner's address belongs to, in addition\
+        \ to its primary site"
+      properties:
+        siteBpn:
+          type: string
+          description: The BPNS of the site
+        name:
+          type:
+            - string
+            - "null"
+          description: The name of the site
+      required:
+        - siteBpn
+    AddressComponentOutputDto:
+      type: object
+      description: Address properties of business partner output data
+      properties:
+        addressBpn:
+          type: string
+          description: "The BPNA of the address, on which the business partner provides\
+            \ a view."
+        name:
+          type:
+            - string
+            - "null"
+          description: "The name of the address, on which the business partner provides\
+            \ a view. This is not according to official registers but according to\
+            \ the name the sharing members agree on, such as the name of a gate or\
+            \ any other additional names that designate the address in common parlance."
+        addressType:
+          type:
+            - string
+            - "null"
+          description: "One of the address types: Legal Address, Site Main Address,\
+            \ Legal and Site Main Address, Additional Address. "
+          enum:
+            - LegalAndSiteMainAddress
+            - LegalAddress
+            - SiteMainAddress
+            - AdditionalAddress
+        physicalPostalAddress:
+          $ref: "#/components/schemas/PhysicalPostalAddressDto"
+          description: "The physical postal address of the address, on which the business\
+            \ partner provides a view, such as an office, warehouse, gate, etc."
+        alternativePostalAddress:
+          description: "The alternative postal address of the address, on which the\
+            \ business partner provides a view, for example if the goods are to be\
+            \ picked up somewhere else."
+          oneOf:
+            - $ref: "#/components/schemas/AlternativePostalAddressDto"
+            - type: "null"
+        confidenceCriteria:
+          $ref: "#/components/schemas/ConfidenceCriteriaDto"
+        states:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessPartnerStateDto"
+        identifiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/AddressIdentifierDto"
+        goldenRecordRelations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AddressGoldenRecordRelationDto"
+        updatedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Timestamp when the associated address golden record was last
+            updated
+      required:
+        - bpnA
+    AddressGoldenRecordRelationDto:
+      type: object
+      properties:
+        relationType:
+          type: string
+          enum:
+            - IsReplacedBy
+        sourceBpn:
+          type: string
+        targetBpn:
+          type: string
+    AddressIdentifierDto:
+      type: object
+      description: "An address identifier (uniquely) identifies the address, such\
+        \ as the Global Location Number (GLN)."
+      properties:
+        value:
+          type: string
+          description: The value of the identifier like "0847976000005".
+        type:
+          type: string
+          description: The type of the identifier.
+    BusinessPartnerOutputDto:
+      type: object
+      description: Generic business partner output with external id
+      properties:
+        externalId:
+          type: string
+          description: The identifier which uniquely identifies (in the internal system
+            landscape of the sharing member) the business partner.
+        nameParts:
+          type: array
+          description: The list of name parts to accommodate the different number
+            of name fields in different systems.
+          items:
+            type: string
+        identifiers:
+          type: array
+          description: The list of identifiers of the business partner. Sorted and
+            duplicates removed by the service.
+          items:
+            $ref: "#/components/schemas/BusinessPartnerIdentifierDto"
+        states:
+          type: array
+          description: The list of (temporary) states of the business partner. Sorted
+            and duplicates removed by the service.
+          items:
+            $ref: "#/components/schemas/BusinessPartnerStateDto"
+        roles:
+          type: array
+          description: "One or more of the roles, the business partner assumes with\
+            \ respect to the sharing member: Supplier, Customer. Sorted and duplicates\
+            \ removed by the service."
+          items:
+            type: string
+            enum:
+              - SUPPLIER
+              - CUSTOMER
+              - ONE_TIME_SUPPLIER
+              - ONE_TIME_CUSTOMER
+        legalEntity:
+          $ref: "#/components/schemas/LegalEntityRepresentationOutputDto"
+          description: "The legal entity, on which the business partner provides a\
+            \ view."
+        site:
+          description: "The site, on which the business partner provides a view."
+          oneOf:
+            - $ref: "#/components/schemas/SiteRepresentationOutputDto"
+            - type: "null"
+        address:
+          $ref: "#/components/schemas/AddressComponentOutputDto"
+          description: "The address, on which the business partner provides a view. "
+        externalSequenceTimestamp:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: The timestamp indicates the last time point of change from
+            the user side
+        scriptVariants:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessPartnerScriptVariantDto"
+        additionalSites:
+          type: array
+          description: "The further sites this business partner's address belongs\
+            \ to, in addition to the primary 'site'."
+          items:
+            $ref: "#/components/schemas/AdditionalSiteOutputDto"
+        createdAt:
+          type: string
+          format: date-time
+          description: The date when the data record has been created.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the business partner record was last updated
+        isOwnCompanyData:
+          type: boolean
+          description: Indicates whether the sharing member claims (in the initial
+            upload) the business partner to belong to the company data of the sharing
+            member.
+      required:
+        - externalId
+    ConfidenceCriteriaDto:
+      type: object
+      properties:
+        sharedByOwner:
+          type: boolean
+        checkedByExternalDataSource:
+          type: boolean
+        numberOfSharingMembers:
+          type: integer
+          format: int32
+        lastConfidenceCheckAt:
+          type: string
+          format: date-time
+        nextConfidenceCheckAt:
+          type: string
+          format: date-time
+        confidenceLevel:
+          type: integer
+          format: int32
+    LegalEntityGoldenRecordRelationDto:
+      type: object
+      properties:
+        relationType:
+          type: string
+          enum:
+            - IsAlternativeHeadquarterFor
+            - IsManagedBy
+            - IsOwnedBy
+            - IsReplacedBy
+        sourceBpn:
+          type: string
+        targetBpn:
+          type: string
+    LegalEntityRepresentationOutputDto:
+      type: object
+      description: Legal Entity properties of business partner output data
+      properties:
+        legalEntityBpn:
+          type: string
+          description: "The BPNL of the legal entity, on which the business partner\
+            \ provides a view."
+        legalName:
+          type:
+            - string
+            - "null"
+          description: "The name of the legal entity, on which the business partner\
+            \ provides a view, according to official registers."
+        shortName:
+          type:
+            - string
+            - "null"
+          description: "The abbreviated name of the legal entity, on which the business\
+            \ partner provides a view."
+        legalForm:
+          type:
+            - string
+            - "null"
+          description: "The legal form of the legal entity, on which the business\
+            \ partner provides a view."
+        confidenceCriteria:
+          $ref: "#/components/schemas/ConfidenceCriteriaDto"
+        ownershipUltimate:
+          type:
+            - boolean
+            - "null"
+          description: Designates whether this legal entity is the ultimate owner
+            in an ownership chain.
+        ultimateOwnerBpnl:
+          type:
+            - string
+            - "null"
+          description: The BPNL of the designated ultimate owner up in the ownership
+            chain.
+        states:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessPartnerStateDto"
+        goldenRecordRelations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LegalEntityGoldenRecordRelationDto"
+        updatedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Timestamp when the associated legal entity golden record was
+            last updated
+      required:
+        - bpnL
+    PageDtoBusinessPartnerOutputDto:
+      type: object
+      description: Paginated collection of results
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of all results in all pages
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number pages
+        page:
+          type: integer
+          format: int32
+          description: Current page number
+        contentSize:
+          type: integer
+          format: int32
+          description: Number of results in the page
+        content:
+          type: array
+          description: Collection of results in the page
+          items:
+            $ref: "#/components/schemas/BusinessPartnerOutputDto"
+    SiteGoldenRecordRelationDto:
+      type: object
+      properties:
+        relationType:
+          type: string
+          enum:
+            - IsReplacedBy
+        sourceBpn:
+          type: string
+        targetBpn:
+          type: string
+    SiteRepresentationOutputDto:
+      type: object
+      description: Site properties of business partner output data
+      properties:
+        siteBpn:
+          type: string
+          description: "The BPNS of the site, on which the business partner provides\
+            \ a view."
+        name:
+          type:
+            - string
+            - "null"
+          description: "The name of the site, on which the business partner provides\
+            \ a view. This is not according to official registers but according to\
+            \ the name the owner chooses."
+        confidenceCriteria:
+          $ref: "#/components/schemas/ConfidenceCriteriaDto"
+        states:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessPartnerStateDto"
+        goldenRecordRelations:
+          type: array
+          items:
+            $ref: "#/components/schemas/SiteGoldenRecordRelationDto"
+        updatedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Timestamp when the associated site golden record was last updated
+    RelationSearchRequest:
+      type: object
+      description: Request payload containing search parameters for business partner
+        relations
+      properties:
+        externalIds:
+          type:
+            - array
+            - "null"
+          items:
+            type: string
+        relationType:
+          type:
+            - string
+            - "null"
+          enum:
+            - IsManagedBy
+            - IsAlternativeHeadquarterFor
+            - IsOwnedBy
+            - IsReplacedBy
+        businessPartnerSourceExternalIds:
+          type:
+            - array
+            - "null"
+          items:
+            type: string
+        businessPartnerTargetExternalIds:
+          type:
+            - array
+            - "null"
+          items:
+            type: string
+        updatedAtFrom:
+          type:
+            - string
+            - "null"
+          format: date-time
+    PageDtoRelationDto:
+      type: object
+      description: Paginated collection of results
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of all results in all pages
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number pages
+        page:
+          type: integer
+          format: int32
+          description: Current page number
+        contentSize:
+          type: integer
+          format: int32
+          description: Number of results in the page
+        content:
+          type: array
+          description: Collection of results in the page
+          items:
+            $ref: "#/components/schemas/RelationDto"
+    PostSharingStateReadyRequest:
+      type: object
+      description: Request for setting business partners into ready to be shared to
+        golden record state
+      properties:
+        externalIds:
+          type: array
+          items:
+            type: string
+    PageDtoBusinessPartnerInputDto:
+      type: object
+      description: Paginated collection of results
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of all results in all pages
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number pages
+        page:
+          type: integer
+          format: int32
+          description: Current page number
+        contentSize:
+          type: integer
+          format: int32
+          description: Number of results in the page
+        content:
+          type: array
+          description: Collection of results in the page
+          items:
+            $ref: "#/components/schemas/BusinessPartnerInputDto"
+    RelationPostRequest:
+      type: object
+      description: A request to create a new relation between two business partners
+      properties:
+        externalId:
+          type:
+            - string
+            - "null"
+        relationType:
+          type: string
+          enum:
+            - IsManagedBy
+            - IsAlternativeHeadquarterFor
+            - IsOwnedBy
+            - IsReplacedBy
+        businessPartnerSourceExternalId:
+          type: string
+        businessPartnerTargetExternalId:
+          type: string
+    PageDtoRelationSharingStateDto:
+      type: object
+      description: Paginated collection of results
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of all results in all pages
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number pages
+        page:
+          type: integer
+          format: int32
+          description: Current page number
+        contentSize:
+          type: integer
+          format: int32
+          description: Number of results in the page
+        content:
+          type: array
+          description: Collection of results in the page
+          items:
+            $ref: "#/components/schemas/RelationSharingStateDto"
+    RelationSharingStateDto:
+      type: object
+      properties:
+        externalId:
+          type: string
+          description: The external identifier of the business partner for which the
+            sharing state entry was created.
+        sharingStateType:
+          type: string
+          description: One of the sharing state types of the current sharing state.
+          enum:
+            - Ready
+            - Pending
+            - Error
+            - Success
+        sharingErrorCode:
+          type:
+            - string
+            - "null"
+          description: "One of the sharing error codes in case the current sharing\
+            \ state type is \"error\". \n* `SharingProcessError`: A general error\
+            \ occurred during the sharing process.\n* `SharingTimeout`: The processing\
+            \ took to long to complete.\n"
+          enum:
+            - SharingProcessError
+            - SharingTimeout
+        sharingErrorMessage:
+          type:
+            - string
+            - "null"
+          description: The error message in case the current sharing state type is
+            "error".
+        taskId:
+          type:
+            - string
+            - "null"
+          description: When the sharing state last changed.
+        updatedAt:
+          type: string
+          format: date-time
+          description: The orchestrator task identifier that was created
+    PageDtoSharingStateDto:
+      type: object
+      description: Paginated collection of results
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of all results in all pages
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number pages
+        page:
+          type: integer
+          format: int32
+          description: Current page number
+        contentSize:
+          type: integer
+          format: int32
+          description: Number of results in the page
+        content:
+          type: array
+          description: Collection of results in the page
+          items:
+            $ref: "#/components/schemas/SharingStateDto"
+    SharingStateDto:
+      type: object
+      description: |
+        A sharing state entry shows the progress in the sharing process and is updated each time the progress for a business partner changes. The business partner is identified by a combination of external ID and business partner type.
+      properties:
+        externalId:
+          type: string
+          description: The external identifier of the business partner for which the
+            sharing state entry was created.
+        sharingStateType:
+          type: string
+          description: One of the sharing state types of the current sharing state.
+          enum:
+            - Pending
+            - Success
+            - Error
+            - Initial
+            - Ready
+        sharingErrorCode:
+          type:
+            - string
+            - "null"
+          description: "One of the sharing error codes in case the current sharing\
+            \ state type is \"error\". \n* `NaturalPersonError`: The provided record\
+            \ contains natural person information.\n* `BpnErrorNotFound`: The provided\
+            \ record can not be matched to a legal entity or an address.\n* `BpnErrorTooManyOptions`:\
+            \ The provided record can not link to a clear legal entity.\n* `MandatoryFieldValidationFailed`:\
+            \ The provided record does not fulfill mandatory validation rules.\n*\
+            \ `BlacklistCountryPresent`: The provided record is part of a country\
+            \ that is not allowed to be processed by the GR process (example: Brazil).\n\
+            * `UnknownSpecialCharacters`: The provided record contains unallowed special\
+            \ characters."
+          enum:
+            - SharingProcessError
+            - SharingTimeout
+            - BpnNotInPool
+            - MissingTaskID
+            - NaturalPersonError
+            - BpnErrorNotFound
+            - BpnErrorTooManyOptions
+            - MandatoryFieldValidationFailed
+            - BlacklistCountryPresent
+            - UnknownSpecialCharacters
+        sharingErrorMessage:
+          type:
+            - string
+            - "null"
+          description: The error message in case the current sharing state type is
+            "error".
+        sharingProcessStarted:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: The date and time when the sharing process was started.
+        taskId:
+          type:
+            - string
+            - "null"
+          description: The orchestrator task identifier that was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: The time when the sharing state has been last updated
+    StatsAddressTypesResponse:
+      type: object
+      properties:
+        legalAndSiteTotal:
+          type: integer
+          format: int32
+        legalTotal:
+          type: integer
+          format: int32
+        siteTotal:
+          type: integer
+          format: int32
+        additionalTotal:
+          type: integer
+          format: int32
+    StatsStagesResponse:
+      type: object
+      properties:
+        inputTotal:
+          type: integer
+          format: int32
+        outputTotal:
+          type: integer
+          format: int32
+    StatsSharingStatesResponse:
+      type: object
+      properties:
+        initialTotal:
+          type: integer
+          format: int32
+        readyTotal:
+          type: integer
+          format: int32
+        pendingTotal:
+          type: integer
+          format: int32
+        successTotal:
+          type: integer
+          format: int32
+        errorTotal:
+          type: integer
+          format: int32
+    StatsConfidenceCriteriaResponse:
+      type: object
+      properties:
+        numberOfBusinessPartnersAverage:
+          type: number
+          format: float
+        uniqueTotal:
+          type: integer
+          format: int64
+        sharedByOwnerTotal:
+          type: integer
+          format: int64
+        checkedByExternalDataSourceTotal:
+          type: integer
+          format: int64
+        confidenceLevelAverage:
+          type: number
+          format: float
+    PageDtoRelationV6Dto:
+      type: object
+      description: Paginated collection of results
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of all results in all pages
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number pages
+        page:
+          type: integer
+          format: int32
+          description: Current page number
+        contentSize:
+          type: integer
+          format: int32
+          description: Number of results in the page
+        content:
+          type: array
+          description: Collection of results in the page
+          items:
+            $ref: "#/components/schemas/RelationV6Dto"
