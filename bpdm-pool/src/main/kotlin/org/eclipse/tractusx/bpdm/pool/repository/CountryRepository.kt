@@ -27,4 +27,6 @@ interface CountryRepository : PagingAndSortingRepository<CountryDb, Long>, CrudR
 
     fun findByCountryCode(countryCode: String): CountryDb?
 
+    fun findByCountryCodeIn(countryCodes: Set<String>): List<CountryDb>
+
 }

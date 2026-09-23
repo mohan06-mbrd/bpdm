@@ -21,6 +21,7 @@ package org.eclipse.tractusx.bpdm.pool.mapper.poolv6.outbound
 
 import org.eclipse.tractusx.bpdm.common.dto.GeoCoordinateDto
 import org.eclipse.tractusx.bpdm.common.dto.TypeKeyNameVerboseDto
+import org.eclipse.tractusx.bpdm.common.service.toCountryVerboseDto
 import org.eclipse.tractusx.bpdm.common.service.toDto
 import org.eclipse.tractusx.bpdm.pool.api.v6.model.*
 import org.eclipse.tractusx.bpdm.pool.api.v6.model.response.AddressPartnerCreateVerboseDtoV6
@@ -75,7 +76,7 @@ class AddressResponseMapperV6(
         with(address) {
             PhysicalPostalAddressVerboseDtoV6(
                 geographicCoordinates = geographicCoordinates?.let { toGeoCoordinate(it) },
-                countryVerbose = country.toDto(),
+                countryVerbose = country.toCountryVerboseDto(),
                 administrativeAreaLevel1Verbose = administrativeAreaLevel1?.let { toRegion(it) },
                 administrativeAreaLevel2 = administrativeAreaLevel2,
                 administrativeAreaLevel3 = administrativeAreaLevel3,
@@ -96,7 +97,7 @@ class AddressResponseMapperV6(
         with(address) {
             AlternativePostalAddressVerboseDtoV6(
                 geographicCoordinates = geographicCoordinates?.let { toGeoCoordinate(it) },
-                countryVerbose = country.toDto(),
+                countryVerbose = country.toCountryVerboseDto(),
                 administrativeAreaLevel1Verbose = administrativeAreaLevel1?.let { toRegion(it) },
                 postalCode = postCode,
                 city = city,
