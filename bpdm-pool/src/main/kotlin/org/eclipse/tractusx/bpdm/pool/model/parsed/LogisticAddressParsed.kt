@@ -66,7 +66,7 @@ data class PhysicalPostalAddressParsed(
 
 data class AlternativePostalAddressParsed(
     val geographicCoordinates: GeoCoordinate?,
-    val country: String?,
+    val country: String,
     val administrativeAreaLevel1: RegionDb?,
     val postalCode: String?,
     val city: String,

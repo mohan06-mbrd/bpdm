@@ -22,6 +22,7 @@ package org.eclipse.tractusx.bpdm.test.testdata.pool.v7
 import org.eclipse.tractusx.bpdm.common.dto.AddressType
 import org.eclipse.tractusx.bpdm.common.dto.PageDto
 import org.eclipse.tractusx.bpdm.common.dto.TypeKeyNameVerboseDto
+import org.eclipse.tractusx.bpdm.common.service.toCountryVerboseDto
 import org.eclipse.tractusx.bpdm.pool.api.model.*
 import org.eclipse.tractusx.bpdm.pool.api.model.AddressIdentifierDto
 import org.eclipse.tractusx.bpdm.pool.api.model.AlternativePostalAddressDto
@@ -408,7 +409,7 @@ class PoolResponseFactoryV7(
         return with(withValuesFrom) {
             PhysicalPostalAddressVerboseDto(
                 geographicCoordinates = geographicCoordinates,
-                countryVerbose = TypeKeyNameVerboseDto(country, country.getName()),
+                countryVerbose = country.toCountryVerboseDto(),
                 administrativeAreaLevel1Verbose = administrativeAreaLevel1?.let { buildAdminArea(it) },
                 administrativeAreaLevel2,
                 administrativeAreaLevel3,
@@ -430,7 +431,7 @@ class PoolResponseFactoryV7(
         return with(withValuesFrom) {
             AlternativePostalAddressVerboseDto(
                 geographicCoordinates = geographicCoordinates,
-                countryVerbose = TypeKeyNameVerboseDto(country, country.getName()),
+                countryVerbose = country.toCountryVerboseDto(),
                 administrativeAreaLevel1Verbose = administrativeAreaLevel1?.let { buildAdminArea(it) },
                 postalCode, city, deliveryServiceType, deliveryServiceQualifier, deliveryServiceNumber
             )

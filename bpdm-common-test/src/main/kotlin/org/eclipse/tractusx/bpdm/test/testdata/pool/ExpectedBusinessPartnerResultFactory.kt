@@ -21,6 +21,7 @@ package org.eclipse.tractusx.bpdm.test.testdata.pool
 
 import org.eclipse.tractusx.bpdm.common.dto.AddressType
 import org.eclipse.tractusx.bpdm.common.dto.TypeKeyNameVerboseDto
+import org.eclipse.tractusx.bpdm.common.service.toCountryVerboseDto
 import org.eclipse.tractusx.bpdm.pool.api.model.*
 import org.eclipse.tractusx.bpdm.pool.api.model.request.AddressPartnerCreateRequest
 import org.eclipse.tractusx.bpdm.pool.api.model.request.LegalEntityPartnerCreateRequest
@@ -219,7 +220,7 @@ class ExpectedBusinessPartnerResultFactory(
         return with(givenRequest) {
             PhysicalPostalAddressVerboseDto(
                 geographicCoordinates = geographicCoordinates,
-                countryVerbose = TypeKeyNameVerboseDto(country, country.getName()),
+                countryVerbose = country.toCountryVerboseDto(),
                 administrativeAreaLevel1Verbose = administrativeAreaLevel1?.let { mapToExpectedResult(it) },
                 administrativeAreaLevel2,
                 administrativeAreaLevel3,
@@ -241,7 +242,7 @@ class ExpectedBusinessPartnerResultFactory(
         return with(givenRequest) {
             AlternativePostalAddressVerboseDto(
                 geographicCoordinates = geographicCoordinates,
-                countryVerbose = TypeKeyNameVerboseDto(country, country.getName()),
+                countryVerbose = country.toCountryVerboseDto(),
                 administrativeAreaLevel1Verbose = administrativeAreaLevel1?.let { mapToExpectedResult(it) },
                 postalCode, city, deliveryServiceType, deliveryServiceQualifier, deliveryServiceNumber
             )
